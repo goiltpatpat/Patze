@@ -13,10 +13,10 @@ Documentation: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) · [Patpat Guide](plugin
 Patze enforces production-grade software engineering discipline on autonomous AI systems:
 
 1. **Dual-Brain Cognitive Topology (System 1 + System 2)**:
-   - **System 1 (Jev Fast Heuristics — <5ms)**: Sub-millisecond deterministic intent routing, pattern-based safety guardrails (intercepting destructive commands like unvetted deletions or malformed state transitions), and schema validation without consuming model inference tokens.
+   - **System 1 (Jev Fast Heuristics & TypeSafe AI)**: Sub-millisecond deterministic intent routing, pattern-based safety guardrails (intercepting command pipelines, fork-bombs, destructive mutations, and credential exfiltration), and semantic proof evaluation. Powered by TypeSafe System One (`Choice`, `Score`, `Noul` primitives with Speculative Fan-out) when authenticated, with zero-latency local fallback.
    - **System 2 (Deep Reasoning LLMs)**: Deep reasoning, architectural synthesis, state-machine generation, and hypothesis testing powered by DeepSeek-R1/V3, Claude, OpenAI, or OpenRouter.
 2. **Proof over Proxy (Patpat Evidence Protocol)**:
-   - Agents are forbidden from claiming task completion based on internal speculation or mock proxies. Every modification requires verified proof observed on the authoritative runtime surface (live HTTP response, exact compiler output, or test exit code).
+   - Agents are forbidden from claiming task completion based on internal speculation or mock proxies. Every modification requires verified proof observed on the authoritative runtime surface (live HTTP response, exact compiler output, or test exit code), evaluated structurally and semantically.
 3. **Micro-Kernel Plugin Fabric (Cordis Engine)**:
    - Spatiotemporally decoupled runtime. Tooling, model providers, execution sandboxes, and file watchers operate as hot-reloadable, isolated services registered via `ctx.provide()` and declarative YAML overlays.
 4. **Resilient Developer Experience**:
@@ -34,9 +34,9 @@ Patze enforces production-grade software engineering discipline on autonomous AI
                                        │
                                        ▼
 +-------------------------------------------------------------------------------+
-|                       System 1: Fast Heuristic Engine (Jev)                   |
-|   • Intent & Skill Routing (<5ms)         • Command & Execution Guardrails    |
-|   • Syntax & Policy Pre-validation        • Zero-Inference Fast Path          |
+|                 System 1: Fast Heuristic & TypeSafe AI Engine (Jev)           |
+|   • Speculative Fan-Out Routing (<5ms)    • AgentShield Execution Guardrails  |
+|   • Choice, Score & Noul Primitives       • Semantic Proof Evaluation (TypeSafe)|
 +-------------------------------------------------------------------------------+
                                        │
                                        ▼
@@ -102,8 +102,13 @@ cp .env.example .env
 
 Key configuration variables:
 ```dotenv
+# Primary System 2 Reasoning Model
 DEEPSEEK_API_KEY="your-deepseek-api-key"
-# Optional overrides:
+
+# System 1 Fast Decision & Verification (TypeSafe AI / Jev)
+TYPESAFE_API_KEY="your-typesafe-api-key" # Optional: unlocks TypeSafe System One cloud primitives
+
+# Optional alternative LLM providers:
 # OPENAI_API_KEY="your-openai-api-key"
 # ANTHROPIC_API_KEY="your-anthropic-api-key"
 ```
@@ -132,14 +137,17 @@ pnpm headless -- "Audit workspace dependencies and report security findings"
 
 ### 5. Jev System 1 Decision CLI
 
-Utilize ultra-fast, zero-token deterministic routing and safety validation:
+Utilize ultra-fast deterministic routing, hardened safety guardrails, and authoritative proof evaluation:
 
 ```sh
-# Sub-millisecond skill intent routing (<5ms)
+# Skill intent routing with speculative fan-out (<5ms fallback)
 ./bin/patze.js route "Fix memory leak in background worker queue"
 
-# Sub-millisecond execution safety guardrail (<5ms)
+# AgentShield execution safety guardrail (pipeline unrolling, secret defense)
 ./bin/patze.js guard "rm -rf /var/log/*"
+
+# Authoritative proof contract evaluation (semantic & diagnostic verification)
+./bin/patze.js evaluate "✓ All 12 tests passed without error" "all unit tests pass"
 ```
 
 ---

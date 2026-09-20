@@ -13,10 +13,10 @@
 Patze 将生产级软件工程规范注入自主 AI 系统：
 
 1. **双脑认知拓扑（System 1 + System 2）**：
-   - **System 1 (Jev 快速启发式引擎 — <5ms)**：提供确定性的意图与技能路由、基于模式匹配的实时安全防护栏（拦截破坏性命令、高危文件操作与畸变调用），不消耗任何模型推理 Token。
+   - **System 1 (Jev 快速反射与 TypeSafe AI 引擎)**：提供亚毫秒级确定性意图路由、基于模式展开的实时安全防护栏（拦截复合命令管道、Fork 炸弹、破坏性修改与凭证窃取），以及语义证据闭环裁决。配置凭证后无缝接入 TypeSafe System One 云端原语（`Choice`、`Score`、`Noul` 投机扇出架构），离线时零延迟自动降级至本地启发式。
    - **System 2 (深度推理基础模型)**：基于 DeepSeek-R1/V3、Claude、OpenAI 等大模型进行高阶架构设计、多阶段状态机规划、假设验证与复杂代码合成。
 2. **证据优于代理（Proof over Proxy）**：
-   - 严格遵循 Patpat 验证协议，禁止智能体仅凭内部推测或模拟测试宣布任务完成。每一项变更都必须在权威真实表面（如实际 HTTP 响应、编译器精准输出、真实测试退出码）获得可复现的运行证据。
+   - 严格遵循 Patpat 验证协议，禁止智能体仅凭内部推测或模拟测试宣布任务完成。每一项变更都必须在权威真实表面（如实际 HTTP 响应、编译器精准输出、真实测试退出码）获得可复现的运行证据，由 Jev 结合语法与语义双重判定。
 3. **微内核插件总线（Cordis 引擎）**：
    - 时空解耦的运行时环境。工具集、模型连接器、沙箱执行器与文件监听器均作为独立的微服务，通过 `ctx.provide()` 与声明式 YAML 补丁实现热重载与按需加载。
 4. **弹性开发者体验**：
@@ -34,9 +34,9 @@ Patze 将生产级软件工程规范注入自主 AI 系统：
                                        │
                                        ▼
 +-------------------------------------------------------------------------------+
-|                        System 1: 快速反射引擎 (Jev)                            |
-|   • 意图与技能路由 (<5ms)                  • 实时指令与沙箱执行防护栏            |
-|   • 语法与模式先验校验                     • 零推理消耗极速路径                  |
+|                 System 1: 快速反射与 TypeSafe AI 引擎 (Jev)                    |
+|   • 投机扇出技能路由 (<5ms)                • AgentShield 管道执行防护栏          |
+|   • Choice, Score & Noul 决策原语          • 权威证据语义裁决 (TypeSafe)         |
 +-------------------------------------------------------------------------------+
                                        │
                                        ▼
@@ -102,7 +102,12 @@ cp .env.example .env
 
 核心配置项：
 ```dotenv
+# System 2 主力深度推理模型
 DEEPSEEK_API_KEY="your-deepseek-api-key"
+
+# System 1 极速决策与验证引擎 (TypeSafe AI / Jev)
+TYPESAFE_API_KEY="your-typesafe-api-key" # 可选：解锁 TypeSafe System One 云端决策原语
+
 # 可选模型供应商：
 # OPENAI_API_KEY="your-openai-api-key"
 # ANTHROPIC_API_KEY="your-anthropic-api-key"
@@ -132,14 +137,17 @@ pnpm headless -- "Audit workspace dependencies and report security findings"
 
 ### 5. Jev System 1 极速决策工具
 
-享受亚毫秒级、零 Token 消耗的本地快速路由与安全防御：
+享受亚毫秒级、强安全防护与权威证据闭环判定：
 
 ```sh
-# 极速意图路由 (<5ms)
+# 投机扇出意图路由 (<5ms 本地降级兜底)
 ./bin/patze.js route "Fix memory leak in background worker queue"
 
-# 极速命令安全防护栏 (<5ms)
+# AgentShield 执行安全防护栏 (管道解构、防凭证窃取与 Fork 炸弹)
 ./bin/patze.js guard "rm -rf /var/log/*"
+
+# 权威证据契约裁决 (结合编译器诊断与语义闭环评估)
+./bin/patze.js evaluate "✓ All 12 tests passed without error" "all unit tests pass"
 ```
 
 ---
