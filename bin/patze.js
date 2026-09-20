@@ -85,6 +85,27 @@ if (args[0] === 'guard' && args[1]) {
   process.exit(0)
 }
 
+// Fast-path: Update and synchronize Patpat skills from upstream repository
+if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
+  console.log('\x1b[36m%s\x1b[0m', '🔄 [Patze] Updating Patpat submodule from upstream (main)...')
+  try {
+    execSync('git submodule update --remote plugins/patpat', {
+      cwd: rootDir,
+      stdio: 'inherit',
+    })
+    console.log('\x1b[36m%s\x1b[0m', '📦 [Patze] Synchronizing skills into .agents/skills...')
+    execSync('python3 -c "import shutil; from pathlib import Path; src=Path(\'plugins/patpat/skills\'); dst=Path(\'.agents/skills\'); [shutil.copytree(s, dst/s.name, dirs_exist_ok=True) for s in src.iterdir() if s.is_dir() and (s/\'SKILL.md\').is_file()]; print(\'✨ Successfully synchronized all Patpat skills.\')"', {
+      cwd: rootDir,
+      stdio: 'inherit',
+    })
+    console.log('\x1b[32m%s\x1b[0m', '✅ [Patze] Patpat skills update completed successfully!')
+    process.exit(0)
+  } catch (err) {
+    console.error('\x1b[31m%s\x1b[0m', `❌ [Patze] Failed to update skills: ${err.message}`)
+    process.exit(1)
+  }
+}
+
 // Assemble DSH command line with automatic Cordis patch overlay
 const dshArgs = [...args]
 

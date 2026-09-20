@@ -1,0 +1,51 @@
+name: Auto-Sync Patpat Skills
+
+on:
+  schedule:
+    # Run automatically every day at 04:00 UTC
+    - cron: '0 4 * * *'
+  repository_dispatch:
+    types: [patpat-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-skills:
+    name: Sync Patpat Submodule & Skills
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Patpat Submodule & Sync Skills
+        run: |
+          git submodule update --remote plugins/patpat
+          python3 -c "import shutil; from pathlib import Path; src=Path('plugins/patpat/skills'); dst=Path('.agents/skills'); [shutil.copytree(s, dst/s.name, dirs_exist_ok=True) for s in src.iterdir() if s.is_dir() and (s/'SKILL.md').is_file()]; print('Synced skills successfully.')"
+
+      - name: Commit and Push if Changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add plugins/patpat .agents/skills
+            git commit -m "chore(skills): auto-sync patpat skills from upstream [skip ci]"
+            git push origin main
+            echo "Successfully pushed updated skills to main."
+          else
+            echo "No changes detected. Patpat skills are already up to date."
+          fi

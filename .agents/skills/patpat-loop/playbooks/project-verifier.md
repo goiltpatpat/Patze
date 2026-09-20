@@ -15,3 +15,4 @@ Read [proof over proxy](../principles/proof-over-proxy.md), [preserve safety](..
 
 Isolate instances so two can run side by side (ports, data dirs, profiles), or refuse to double-drive a shared instance.
 Never kill by process name; kill only what this run started.
+

@@ -16,7 +16,8 @@
     "dsh": "./bin/patze.js",
     "build": "pnpm --dir engine/deepseek-harness run build",
     "test": "pnpm --dir engine/deepseek-harness run test",
-    "sync-skills": "python3 plugins/patpat/scripts/install_skills.py --target .agents/skills --mode copy"
+    "update-skills": "./bin/patze.js update-skills",
+    "sync-skills": "./bin/patze.js update-skills"
   },
   "keywords": [
     "patze",
