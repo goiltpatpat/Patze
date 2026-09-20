@@ -26,7 +26,6 @@ Patze/ (Standalone Project Root)
 ├── .env.example                     # Environment template (DEEPSEEK_API_KEY)
 ├── DEVELOPER_GUIDE.md               # This guide
 ├── package.json                     # Patze root project manifest & orchestration scripts
-├── pnpm-workspace.yaml              # Monorepo workspaces linking engine & plugins
 └── README.md                        # Flagship Patze documentation
 ```
 
@@ -37,7 +36,7 @@ Patze/ (Standalone Project Root)
 | Role | Domain | Key Architecture Mandates |
 |---|---|---|
 | **Google Staff Systems Architect** | Subsystem Decoupling & Standalone Repository | Isolated DeepSeek Harness into `engine/deepseek-harness/` so Patze maintains its own clean Git history, custom application lifecycle, and unpolluted root workspace. |
-| **Google Senior Tooling Lead** | Monorepo Workspace Orchestration | Configured `pnpm-workspace.yaml` at root to wire `engine/deepseek-harness` and `src/` together, providing top-level scripts (`pnpm web`, `pnpm headless`, `pnpm build`) without friction. |
+| **Google Senior Tooling Lead** | Zero-Friction Proxy Orchestration | Configured root `package.json` proxy scripts to wire `engine/deepseek-harness` and `src/` together, providing top-level scripts (`pnpm web`, `pnpm headless`, `pnpm build`) without polluting the root namespace. |
 | **Google Principal Verification Engineer** | Quality Gates & Proof-over-Proxy | Preserved full build and test capability across the entire engine and verified runtime skill loading of all 22 Patpat skills. |
 | **Google Senior DX Lead** | Developer Experience & Extensibility | Created top-level entrypoints in `src/`, modular configuration in `config/`, and single-command workflows for developers. |
 
