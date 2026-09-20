@@ -5,9 +5,10 @@
   name: '@deepseek-ai/dsh-skill-filesystem'
   disabled: false
   config:
+    watch: false
     customSkillDirs:
       - ../.agents/skills
 
 - insert:
     - id: patze-core
-      name: ../src/index.ts
+      name: ../src/index.js

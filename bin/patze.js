@@ -107,17 +107,26 @@ if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
 }
 
 // Assemble DSH command line with automatic Cordis patch overlay
-const dshArgs = [...args]
+// Assemble DSH command line: launcher options (--profile, --patch) must precede app arguments
+let profile = 'web'
+const remainingArgs = []
 
-// If --patch is not explicitly supplied by user and cordis.yml exists, inject it
-if (!dshArgs.includes('--patch') && existsSync(cordisPatch)) {
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i]
+  if (arg === 'web' || arg === 'headless' || arg === 'rescue') {
+    profile = arg
+  } else if (arg === '--profile' && args[i + 1]) {
+    profile = args[++i]
+  } else {
+    remainingArgs.push(arg)
+  }
+}
+
+const dshArgs = ['--profile', profile]
+if (!remainingArgs.includes('--patch') && existsSync(cordisPatch)) {
   dshArgs.push('--patch', cordisPatch)
 }
-
-// Default to 'web' profile if no profile or sub-command specified
-if (dshArgs.length === 0 || (dshArgs.length === 2 && dshArgs[0] === '--patch')) {
-  dshArgs.unshift('web')
-}
+dshArgs.push(...remainingArgs)
 
 const proc = spawn('pnpm', ['dsh', ...dshArgs], {
   cwd: engineDir,

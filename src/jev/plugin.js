@@ -3,27 +3,13 @@
  */
 
 import { JevEngine } from './engine.js'
-import type { JevConfig } from './types.js'
 
 export const name = 'patze-jev'
 
-export interface JevService {
-  engine: JevEngine
-  routeSkill: JevEngine['routeSkill']
-  checkSafety: JevEngine['checkSafety']
-  evaluateProof: JevEngine['evaluateProof']
-}
-
-// Any generic Cordis context
-export interface CordisContext {
-  provide?(name: string, service?: unknown): void
-  on?(event: string, listener: (...args: unknown[]) => unknown): void
-}
-
-export function apply(ctx: CordisContext, config: JevConfig = {}) {
+export function apply(ctx, config = {}) {
   const engine = new JevEngine(config)
 
-  const service: JevService = {
+  const service = {
     engine,
     routeSkill: (prompt) => engine.routeSkill(prompt),
     checkSafety: (command) => engine.checkSafety(command),
