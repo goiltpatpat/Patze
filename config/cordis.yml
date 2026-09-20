@@ -3,3 +3,6 @@
 
 - id: patze-core
   name: './src/index.ts'
+
+- id: patze-jev
+  name: './src/jev/plugin.ts'

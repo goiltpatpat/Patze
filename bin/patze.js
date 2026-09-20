@@ -60,6 +60,26 @@ if (existsSync(rootEnv)) {
 }
 
 const args = process.argv.slice(2)
+
+// Fast-path: Jev System 1 Decision CLI Commands
+if (args[0] === 'route' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const result = await engine.routeSkill(args.slice(1).join(' '))
+  console.log('\x1b[35m%s\x1b[0m', '🧠 [Patze Jev System 1] Fast Skill Route Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
+if (args[0] === 'guard' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const result = await engine.checkSafety(args.slice(1).join(' '))
+  console.log('\x1b[33m%s\x1b[0m', '🛡️ [Patze Jev System 1] Safety Guardrail Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
 const proc = spawn('pnpm', ['dsh', ...args], {
   cwd: engineDir,
   stdio: 'inherit',
@@ -69,3 +89,4 @@ const proc = spawn('pnpm', ['dsh', ...args], {
 proc.on('exit', (code) => {
   process.exit(code ?? 0)
 })
+

@@ -12,6 +12,7 @@ Documentation: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) · [Patpat Guide](plugin
 
 Patze bridges advanced agent orchestration with production-grade software engineering discipline:
 
+- **Dual-Brain Architecture (System 1 + System 2)**: Integrates Jev (TypeSafe AI) for sub-100ms structured decision-making, skill routing, and execution guardrails (System 1), paired with DeepSeek-R1/V3 for deep reasoning and synthesis (System 2).
 - **Everything-is-a-Plugin**: Dynamic spatiotemporal composability via Cordis. Every tool, model provider, and workflow is a modular, hot-reloadable plugin.
 - **Proof over Proxy**: Built-in adherence to Patpat engineering principles. Agents observe the authoritative surface rather than relying on plausible guesses or mock proxies.
 - **22 Evidence-Driven Skills**: Native discovery of specialized engineering skills (`patpat-loop`, `patpat-architect`, `patpat-debug`, `patpat-verify`, `patpat-review`, `patpat-ship`, and more).
@@ -118,6 +119,18 @@ The Web UI launches at `http://127.0.0.1:3080`. Pass `--no-open` for remote or h
 pnpm headless -- "Analyze repository architecture and report findings"
 # Or:
 ./bin/patze.js --profile headless "Analyze repository architecture and report findings"
+```
+
+### Jev System 1 Fast-Path CLI
+
+Patze includes ultra-fast sub-10ms decision utilities powered by Jev:
+
+```sh
+# Fast skill routing (<5ms)
+./bin/patze.js route "Fix race condition in background task queue"
+
+# Fast execution safety guardrail (<5ms)
+./bin/patze.js guard "rm -rf /var/log/*"
 ```
 
 ---

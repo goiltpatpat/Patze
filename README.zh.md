@@ -12,6 +12,7 @@
 
 Patze 将先进的智能体编排与生产级软件工程规范相结合：
 
+- **双脑架构（System 1 + System 2）**：集成 Jev (TypeSafe AI) 专有快速决策模型，实现低于 100ms 的技能路由、安全防护栏与终止评估（快思考 System 1），与 DeepSeek-R1/V3 深度推理及代码生成（慢思考 System 2）完美协同。
 - **一切皆插件（Everything-is-a-Plugin）**：基于 Cordis 的时空可组合性，工具、模型提供者及工作流皆为可热重载的模块化插件。
 - **证据优于代理（Proof over Proxy）**：内置践行 Patpat 工程原则，智能体必须在权威真实表面验证行为，杜绝凭空推测或假造测试。
 - **22 项证据驱动技能**：原生发现并加载专业工程技能（`patpat-loop`、`patpat-architect`、`patpat-debug`、`patpat-verify`、`patpat-review`、`patpat-ship` 等）。
@@ -118,6 +119,18 @@ Web UI 将运行在 `http://127.0.0.1:3080`。在远程或无桌面环境下可�
 pnpm headless -- "Analyze repository architecture and report findings"
 # 或：
 ./bin/patze.js --profile headless "Analyze repository architecture and report findings"
+```
+
+### Jev System 1 极速决策 CLI
+
+Patze 内置由 Jev 驱动的低于 10ms 快速决策工具：
+
+```sh
+# 极速技能路由 (<5ms)
+./bin/patze.js route "修复后台任务队列中的偶发竞态条件"
+
+# 极速执行安全防护栏 (<5ms)
+./bin/patze.js guard "rm -rf /var/log/*"
 ```
 
 ---

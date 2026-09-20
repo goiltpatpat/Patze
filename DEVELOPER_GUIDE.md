@@ -42,11 +42,16 @@ Patze/ (Standalone Project Root)
 
 ---
 
-## 3. How Patze Operates on DeepSeek Harness & Patpat
+## 3. How Patze Operates: Dual-Brain (System 1 Jev + System 2 DeepSeek) & Patpat
 
-1. **Cordis Kernel**: Patze mounts plugins declared in `config/cordis.yml` and inherits the base engine bundles from `engine/deepseek-harness`.
-2. **Skill Discovery**: The `@deepseek-ai/dsh-skill-filesystem` provider discovers all 22 Patpat engineering skills in `.agents/skills/`.
-3. **Evidence-Driven Engineering**: Agents running inside Patze operate under the Patpat loop (`FRAME -> INSPECT -> PROOF CONTRACT -> ACT -> VERIFY -> REVIEW -> REPORT`).
+1. **System 1 (Jev Fast Decision Layer)**: Powered by `@patze/plugin-jev`, executing in sub-10ms latency:
+   - **Fast Intent & Skill Routing**: Classifies user prompts and selects the optimal Patpat skill (`patpat-debug`, `patpat-architect`, `patpat-verify`, etc.).
+   - **Safety Guardrail**: Inspects tool calls and shell operations before execution to block catastrophic commands (`rm -rf /`, force pushes to `main`).
+   - **Proof Contract Evaluation**: Rapid rubric scoring of task outputs to prevent infinite loops.
+2. **System 2 (DeepSeek-R1/V3 Heavy Reasoning)**: Handles deep multi-step planning, code generation, architectural refactoring, and complex tool execution.
+3. **Cordis Kernel**: Patze mounts plugins declared in `config/cordis.yml` and inherits the base engine bundles from `engine/deepseek-harness`.
+4. **Skill Discovery**: The `@deepseek-ai/dsh-skill-filesystem` provider discovers all 22 Patpat engineering skills in `.agents/skills/`.
+5. **Evidence-Driven Engineering**: Agents running inside Patze operate under the Patpat loop (`FRAME -> INSPECT -> PROOF CONTRACT -> ACT -> VERIFY -> REVIEW -> REPORT`).
 
 ---
 
