@@ -247,6 +247,44 @@ export class JevEngine {
         latencyMs: Math.round(performance.now() - startTime),
       }
     }
+    // Check 6 (AgentShield): Remote code execution via pipe-to-shell (curl/wget piped to bash/sh/python)
+    if (/(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) || /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed)) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Remote code execution via pipe-to-shell detected (untrusted script piping)',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    // Check 7 (AgentShield): Secret and credential exfiltration guardrail
+    if (
+      /\bcat\s+.*(\.ssh\/id_|\.pem|\.key|\.env\b)/i.test(trimmed) ||
+      /(curl|wget|nc|ncat)\s+.*(@\.env|(\$|%)(DEEPSEEK|OPENAI|ANTHROPIC|API_KEY|SECRET|TOKEN))/i.test(trimmed)
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Potential credential or secret exfiltration detected',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    // Check 8 (AgentShield): Privileged system path mutation
+    if (
+      /(>\s*|tee\s+(-\w+\s+)?)\/(etc\/(passwd|shadow|sudoers)|boot|sys|proc)/i.test(trimmed) ||
+      /\bchmod\s+[0-7]{3,4}\s+\/etc\/(passwd|shadow|sudoers)\b/i.test(trimmed)
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Privileged system path mutation or permission tampering detected',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
 
     return {
       safe: true,
