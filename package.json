@@ -11,9 +11,9 @@
   "scripts": {
     "setup": "git submodule update --init --recursive && pnpm --dir engine/deepseek-harness install && pnpm build",
     "postinstall": "git submodule update --init --recursive",
-    "web": "pnpm --dir engine/deepseek-harness dsh web",
-    "headless": "pnpm --dir engine/deepseek-harness dsh headless",
-    "dsh": "pnpm --dir engine/deepseek-harness dsh",
+    "web": "./bin/patze.js web",
+    "headless": "./bin/patze.js headless",
+    "dsh": "./bin/patze.js",
     "build": "pnpm --dir engine/deepseek-harness run build",
     "test": "pnpm --dir engine/deepseek-harness run test",
     "sync-skills": "python3 plugins/patpat/scripts/install_skills.py --target .agents/skills --mode copy"

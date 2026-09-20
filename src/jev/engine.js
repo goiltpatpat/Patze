@@ -2,9 +2,9 @@
  * Jev (TypeSafe AI) System 1 Decision & Control Engine for Patze.
  * 
  * Native high-performance ESM engine:
- * 1. Fast Skill Routing (22 Patpat skills)
- * 2. Execution Safety Guardrails
- * 3. Proof Contract & Loop Evaluation
+ * 1. Comprehensive Skill Routing (covers all 22 Patpat skills)
+ * 2. Hardened Token-Based Safety Guardrails
+ * 3. High-Precision Proof Contract & Test Suite Evaluator
  */
 
 export class JevEngine {
@@ -18,7 +18,7 @@ export class JevEngine {
   }
 
   /**
-   * Fast Skill Router: Classifies user prompt into the optimal Patpat engineering skill.
+   * Fast Skill Router: Classifies user prompt into the optimal Patpat engineering skill (all 22 skills).
    * @param {string} prompt
    * @returns {Promise<import('./types.js').SkillRouteResult>}
    */
@@ -37,7 +37,7 @@ export class JevEngine {
             'patpat-review', 'patpat-ship', 'patpat-perf', 'patpat-arena',
             'patpat-swarm', 'patpat-run', 'patpat-learn', 'patpat-skill',
             'patpat-setup', 'patpat-automation', 'patpat-impact', 'patpat-eval',
-            'patpat-loop'
+            'patpat-loop', 'patpat'
           ]
         })
         if (remoteResult) {
@@ -46,70 +46,115 @@ export class JevEngine {
             latencyMs: Math.round(performance.now() - startTime),
           }
         }
-      } catch (err) {
+      } catch {
         // Fall through to heuristic classifier
       }
     }
 
-    // 2. High-speed System 1 Heuristic Pattern Matcher (<5ms)
+    // 2. High-speed System 1 Heuristic Pattern Matcher covering all 22 Patpat skills
     let selectedSkill = 'patpat-loop'
     let confidence = 0.85
     let category = 'general-engineering'
     let reasoning = 'Default evidence-driven loop'
 
-    if (/\b(debug|fix|bug|error|exception|crash|fail|traceback|defect|issue|broken)\b/i.test(lower)) {
+    if (/\b(debug|fix|bug|error|exception|crash|fail|traceback|defect|issue|broken|failing test)\b/i.test(lower)) {
       selectedSkill = 'patpat-debug'
       confidence = 0.96
       category = 'diagnostics'
       reasoning = 'Detected defect diagnosis or error fixing intent'
-    } else if (/\b(architect|design|contract|boundary|schema|migration|interface|architecture)\b/i.test(lower)) {
+    } else if (/\b(architect|system design|data model|public contract|boundary|schema migration|architecture)\b/i.test(lower)) {
       selectedSkill = 'patpat-architect'
       confidence = 0.95
       category = 'architecture'
-      reasoning = 'Detected architectural or contract design intent'
-    } else if (/\b(review|audit|challenge|inspect-diff|critique|sanity)\b/i.test(lower)) {
+      reasoning = 'Detected architectural, schema migration, or public contract design intent'
+    } else if (/\b(review|audit|challenge|inspect-diff|critique|sanity check|skeptical)\b/i.test(lower)) {
       selectedSkill = 'patpat-review'
-      confidence = 0.94
+      confidence = 0.95
       category = 'review'
-      reasoning = 'Detected independent review or verification challenge intent'
-    } else if (/\b(ship|land|merge|publish|deploy|pr|pull request|release)\b/i.test(lower)) {
+      reasoning = 'Detected independent skeptical review or verification challenge intent'
+    } else if (/\b(ship|land|merge|publish|deploy|open pr|create pr|pull request|release)\b/i.test(lower)) {
       selectedSkill = 'patpat-ship'
       confidence = 0.97
       category = 'delivery'
       reasoning = 'Detected release, PR merge, or shipping intent'
-    } else if (/\b(verify|prove|proof|test|evidence|acceptance|assert)\b/i.test(lower)) {
-      selectedSkill = 'patpat-verify'
-      confidence = 0.93
+    } else if (/\b(create verifier|project verifier|maintain verifier|authoritative verifier script)\b/i.test(lower)) {
+      selectedSkill = 'patpat-verifier'
+      confidence = 0.95
       category = 'verification'
-      reasoning = 'Detected proof contract or verification execution intent'
-    } else if (/\b(perf|performance|latency|memory|cpu|optimize|benchmark|speed up|hillclimb)\b/i.test(lower)) {
+      reasoning = 'Detected automated project verifier creation or maintenance intent'
+    } else if (/\b(verify|prove|proof contract|evidence|acceptance check|assert real behavior)\b/i.test(lower)) {
+      selectedSkill = 'patpat-verify'
+      confidence = 0.94
+      category = 'verification'
+      reasoning = 'Detected proof contract or authoritative surface verification intent'
+    } else if (/\b(perf|performance|latency|memory|cpu|throughput|startup time|optimize|benchmark|hillclimb)\b/i.test(lower)) {
       selectedSkill = 'patpat-perf'
       confidence = 0.95
       category = 'optimization'
-      reasoning = 'Detected performance tuning or profiling intent'
-    } else if (/\b(plan|workflow|roadmap|phases|step-by-step)\b/i.test(lower)) {
+      reasoning = 'Detected resource optimization or performance benchmarking intent'
+    } else if (/\b(arena|competing attempts|alternative designs|pick base|graft|race)\b/i.test(lower)) {
+      selectedSkill = 'patpat-arena'
+      confidence = 0.96
+      category = 'synthesis'
+      reasoning = 'Detected competing attempts or design synthesis intent'
+    } else if (/\b(swarm|parallel workers|fan out|matrix|coverage matrix|parallel checks)\b/i.test(lower)) {
+      selectedSkill = 'patpat-swarm'
+      confidence = 0.95
+      category = 'scaling'
+      reasoning = 'Detected parallel fan-out or matrix execution intent'
+    } else if (/\b(state machine|checkpoint|resume|multi-phase run|long work|survive context loss)\b/i.test(lower)) {
+      selectedSkill = 'patpat-run'
+      confidence = 0.95
+      category = 'orchestration'
+      reasoning = 'Detected resumable state-machine run or checkpointing intent'
+    } else if (/\b(blast radius|downstream regression|contract consumers|trace impact|risky diff)\b/i.test(lower)) {
+      selectedSkill = 'patpat-impact'
+      confidence = 0.94
+      category = 'impact'
+      reasoning = 'Detected blast radius tracing or regression risk analysis intent'
+    } else if (/\b(learn|encode lesson|recurring failure|durable constraint|prevent mistake)\b/i.test(lower)) {
+      selectedSkill = 'patpat-learn'
+      confidence = 0.94
+      category = 'learning'
+      reasoning = 'Detected recurring failure conversion into durable constraint intent'
+    } else if (/\b(create skill|new skill|edit skill|skill\.md|agent skill workflow)\b/i.test(lower)) {
+      selectedSkill = 'patpat-skill'
+      confidence = 0.95
+      category = 'meta-skill'
+      reasoning = 'Detected reusable agent skill creation or modification intent'
+    } else if (/\b(eval skill|skill trigger trial|evaluate routing|test skill)\b/i.test(lower)) {
+      selectedSkill = 'patpat-eval'
+      confidence = 0.93
+      category = 'evaluation'
+      reasoning = 'Detected agent skill evaluation or trial execution intent'
+    } else if (/\b(setup|install patpat|plugin manager|validate plugin|host compatibility)\b/i.test(lower)) {
+      selectedSkill = 'patpat-setup'
+      confidence = 0.95
+      category = 'setup'
+      reasoning = 'Detected Patpat host installation or setup validation intent'
+    } else if (/\b(automation|webhook|external automation|kill-switch|trigger idempotency)\b/i.test(lower)) {
+      selectedSkill = 'patpat-automation'
+      confidence = 0.94
+      category = 'automation'
+      reasoning = 'Detected external automation or trigger design intent'
+    } else if (/\b(delegated slice|integration owner|worker slice|forbidden scope)\b/i.test(lower)) {
+      selectedSkill = 'patpat-engineer'
+      confidence = 0.93
+      category = 'execution'
+      reasoning = 'Detected delegated implementation slice execution intent'
+    } else if (/\b(plan|workflow design|multi-phase|roadmap|phased sequence)\b/i.test(lower)) {
       selectedSkill = 'patpat-plan'
       confidence = 0.92
       category = 'planning'
       reasoning = 'Detected multi-phase workflow planning intent'
-    } else if (/\b(explain|how|why|understand|inspect|explore|overview|where is)\b/i.test(lower)) {
+    } else if (/\b(explain|how|why|understand|inspect|explore repo|placement|history)\b/i.test(lower)) {
       selectedSkill = 'patpat-inspect'
-      confidence = 0.91
+      confidence = 0.92
       category = 'exploration'
       reasoning = 'Detected read-only repository understanding intent'
-    } else if (/\b(arena|compete|competing|alternative|compare implementations)\b/i.test(lower)) {
-      selectedSkill = 'patpat-arena'
-      confidence = 0.96
-      category = 'synthesis'
-      reasoning = 'Detected competing attempts or synthesis intent'
-    } else if (/\b(swarm|parallel|fan out|matrix|distributed)\b/i.test(lower)) {
-      selectedSkill = 'patpat-swarm'
-      confidence = 0.94
-      category = 'scaling'
-      reasoning = 'Detected parallel fan-out or matrix execution intent'
-    } else if (/\b(add|create|implement|feature|build|scaffold)\b/i.test(lower)) {
+    } else if (/\b(add|create|implement|feature|scaffold|refactor|build)\b/i.test(lower)) {
       selectedSkill = 'patpat-change'
-      confidence = 0.90
+      confidence = 0.91
       category = 'implementation'
       reasoning = 'Detected bounded feature implementation intent'
     }
@@ -125,54 +170,81 @@ export class JevEngine {
   }
 
   /**
-   * Fast Safety Guardrail: Evaluates tool calls and shell operations for destructive risk.
+   * Hardened Safety Guardrail: Position-insensitive tokenized inspection of shell commands.
    * @param {string} command
    * @returns {Promise<import('./types.js').SafetyCheckResult>}
    */
   async checkSafety(command) {
     const startTime = performance.now()
     const trimmed = command.trim()
+    const lower = trimmed.toLowerCase()
+    const tokens = lower.split(/\s+/).filter(Boolean)
 
-    // High-risk patterns
-    const criticalPatterns = [
-      /\brm\s+(-[a-zA-Z]*r[a-zA-Z]*\s+|\s+-[a-zA-Z]*r[a-zA-Z]*)\s*(\/|\*|~\/)/i, // rm -rf / or *
-      /\bmkfs\b/i,
-      /\bdd\s+if=/i,
-      /\bchmod\s+(-R\s+)?777\s+\//i,
-      /\b(DROP|TRUNCATE)\s+(DATABASE|TABLE)\b/i,
-      /\bgit\s+push\s+.*--force.*main\b/i,
-    ]
+    // Check 1: Critical destructive file deletion
+    // Catch: rm -rf /, rm -r -f /, rm -fr *, rm -rf ./*, rm -rf ~
+    if (tokens[0] === 'rm') {
+      const hasRecursive = tokens.some(t => t === '-r' || t === '-R' || (t.startsWith('-') && t.includes('r')))
+      const hasForce = tokens.some(t => t === '-f' || (t.startsWith('-') && t.includes('f')))
+      const targets = tokens.filter(t => !t.startsWith('-'))
+      const dangerousTargets = targets.some(t => t === '/' || t === '/*' || t.startsWith('/etc') || t.startsWith('/var') || t === '~' || t === '~/' || t === '*' || t === './*' || t === '.')
 
-    const highRiskPatterns = [
-      /\bgit\s+reset\s+--hard\b/i,
-      /\bgit\s+clean\s+-fdx\b/i,
-      /\bkill\s+-9\s+1\b/i,
-      /\bpkill\s+-9\b/i,
-      /\bshutdown\b/i,
-      /\breboot\b/i,
-    ]
-
-    for (const pat of criticalPatterns) {
-      if (pat.test(trimmed)) {
+      if (hasRecursive && hasForce && dangerousTargets) {
         return {
           safe: false,
           riskLevel: 'critical',
           requiresConfirmation: true,
-          reason: 'Critical destructive command detected',
+          reason: 'Catastrophic destructive recursive deletion detected',
           latencyMs: Math.round(performance.now() - startTime),
         }
       }
     }
 
-    for (const pat of highRiskPatterns) {
-      if (pat.test(trimmed)) {
+    // Check 2: Destructive disk/filesystem formatting
+    if (tokens.some(t => t === 'mkfs' || t.startsWith('mkfs.') || (t === 'dd' && lower.includes('if=')))) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Raw disk write or formatting command detected',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    // Check 3: Git force push to default/main branch (position-insensitive)
+    // Catch: git push origin main --force, git push -f origin main, git push origin main -f, git push --force origin main
+    if (tokens[0] === 'git' && tokens.includes('push')) {
+      const hasForceFlag = tokens.some(t => t === '--force' || t === '-f' || t.startsWith('--force-with-lease'))
+      const targetsMain = tokens.some(t => t === 'main' || t === 'master' || t === 'HEAD')
+      if (hasForceFlag && targetsMain) {
         return {
           safe: false,
-          riskLevel: 'high',
+          riskLevel: 'critical',
           requiresConfirmation: true,
-          reason: 'Irreversible repository state modification detected',
+          reason: 'Force push to protected primary branch detected',
           latencyMs: Math.round(performance.now() - startTime),
         }
+      }
+    }
+
+    // Check 4: Hard git resets or clean that destroy uncommitted work
+    if (tokens[0] === 'git' && (lower.includes('reset --hard') || lower.includes('clean -fdx') || lower.includes('clean -dfx'))) {
+      return {
+        safe: false,
+        riskLevel: 'high',
+        requiresConfirmation: true,
+        reason: 'Irreversible destruction of uncommitted local working tree changes',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    // Check 5: Database drop/truncate
+    if (/\b(drop|truncate)\s+(database|schema|table)\b/i.test(trimmed)) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Database destruction statement detected',
+        latencyMs: Math.round(performance.now() - startTime),
       }
     }
 
@@ -186,31 +258,84 @@ export class JevEngine {
   }
 
   /**
-   * Proof Contract Evaluator: Fast rubric evaluation of task outputs.
-   * @param {string} output
-   * @param {string} contract
+   * High-Precision Proof Contract Evaluator:
+   * Handles exit codes, test summaries (e.g. "Failed: 0"), assertion phrases, and positive/negative evidence.
+   * @param {string | { stdout?: string, stderr?: string, exitCode?: number }} output
+   * @param {string | string[]} contract
    * @returns {Promise<import('./types.js').ProofEvaluationResult>}
    */
   async evaluateProof(output, contract) {
     const startTime = performance.now()
-    const lowerOutput = output.toLowerCase()
 
-    const contractClauses = contract
-      .split('\n')
-      .map(c => c.trim())
-      .filter(c => c.length > 0 && !c.startsWith('#'))
+    let textOutput = ''
+    let exitCode = 0
+    if (typeof output === 'string') {
+      textOutput = output
+    } else if (output && typeof output === 'object') {
+      textOutput = `${output.stdout ?? ''}\n${output.stderr ?? ''}`
+      if (typeof output.exitCode === 'number') {
+        exitCode = output.exitCode
+      }
+    } else {
+      textOutput = String(output ?? '')
+    }
+
+    const lowerOutput = textOutput.toLowerCase()
+
+    // 1. Detect explicit test execution success summaries and active failures
+    const hasZeroFailures = /\bfailed:\s*0\b/i.test(textOutput) || /\b0\s+failed\b/i.test(textOutput) || /\b0\s+errors\b/i.test(textOutput)
+    const hasActiveFailures = exitCode !== 0
+      || /\bfailed:\s*[1-9]\d*\b/i.test(textOutput)
+      || /\b[1-9]\d*\s+failed\b/i.test(textOutput)
+      || /\bassertionerror\b/i.test(textOutput)
+      || /\bpanic:\s+/i.test(textOutput)
+      || /\bfail:\s+/i.test(textOutput)
+
+    // 2. Parse contract clauses
+    let contractClauses = []
+    if (Array.isArray(contract)) {
+      contractClauses = contract
+        .map(c => String(c).trim())
+        .filter(c => c.length > 0 && !c.startsWith('#'))
+    } else if (typeof contract === 'string') {
+      contractClauses = contract
+        .split('\n')
+        .map(c => c.trim())
+        .filter(c => c.length > 0 && !c.startsWith('#'))
+    } else {
+      contractClauses = [String(contract ?? '').trim()]
+    }
+
+    if (contractClauses.length === 0) {
+      contractClauses = ['execution succeeds without errors']
+    }
 
     const passed = []
     const failed = []
 
     for (const clause of contractClauses) {
+      const lowerClause = clause.toLowerCase()
+
+      // Check negation clauses (e.g. "without error", "0 failures", "no regressions")
+      if (lowerClause.includes('without error') || lowerClause.includes('0 failure') || lowerClause.includes('no error')) {
+        if (!hasActiveFailures && (hasZeroFailures || lowerOutput.includes('success') || lowerOutput.includes('passed') || exitCode === 0)) {
+          passed.push(clause)
+        } else {
+          failed.push(clause)
+        }
+        continue
+      }
+
+      // Check multi-word phrase matching
       const keywords = clause
         .split(/\s+/)
-        .filter(w => w.length > 3)
+        .filter(w => w.length > 2)
         .map(w => w.toLowerCase())
 
-      const hasMatch = keywords.some(k => lowerOutput.includes(k))
-      if (hasMatch) {
+      const matchedCount = keywords.filter(k => lowerOutput.includes(k)).length
+      const matchRatio = keywords.length > 0 ? matchedCount / keywords.length : 0
+
+      if (matchRatio >= 0.5 && !hasActiveFailures) {
         passed.push(clause)
       } else {
         failed.push(clause)
@@ -219,7 +344,7 @@ export class JevEngine {
 
     const total = contractClauses.length || 1
     const score = passed.length / total
-    const satisfied = score >= 0.75 && !lowerOutput.includes('error:') && !lowerOutput.includes('failed:')
+    const satisfied = score >= 0.75 && !hasActiveFailures
 
     return {
       satisfied,
@@ -227,7 +352,7 @@ export class JevEngine {
       passedAssertions: passed,
       failedAssertions: failed,
       feedback: satisfied
-        ? 'Proof contract satisfied with sufficient empirical evidence.'
+        ? 'Proof contract satisfied with verified empirical evidence.'
         : `Unsatisfied assertions: ${failed.join('; ')}`,
       latencyMs: Math.round(performance.now() - startTime),
     }

@@ -1,8 +1,13 @@
-# Patze Platform Cordis Configuration
-# Defines base services, custom plugins, and skill providers
+# Patze Platform Cordis Patch Overlay
+# Configures skill discovery and inserts Patze core + Jev System 1 plugins
 
-- id: patze-core
-  name: './src/index.ts'
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+  disabled: false
+  config:
+    customSkillDirs:
+      - ../.agents/skills
 
-- id: patze-jev
-  name: './src/jev/plugin.ts'
+- insert:
+    - id: patze-core
+      name: ../src/index.ts

@@ -2,12 +2,13 @@
 import { spawn, execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(__dirname, '..')
 const engineDir = resolve(rootDir, 'engine/deepseek-harness')
 const enginePkg = resolve(engineDir, 'package.json')
+const cordisPatch = resolve(rootDir, 'config/cordis.yml')
 
 // Smart Auto-Bootstrap: If submodule is uninitialized, automatically initialize it
 if (!existsSync(enginePkg)) {
@@ -17,7 +18,7 @@ if (!existsSync(enginePkg)) {
       cwd: rootDir,
       stdio: 'inherit',
     })
-  } catch (err) {
+  } catch {
     console.error('\x1b[31m%s\x1b[0m', '❌ [Patze] Failed to initialize submodules. Please run: git submodule update --init --recursive')
     process.exit(1)
   }
@@ -32,7 +33,7 @@ if (!existsSync(engineNodeModules)) {
       cwd: engineDir,
       stdio: 'inherit',
     })
-  } catch (err) {
+  } catch {
     console.error('\x1b[31m%s\x1b[0m', '❌ [Patze] Failed to install dependencies. Please run: pnpm --dir engine/deepseek-harness install')
     process.exit(1)
   }
@@ -42,7 +43,6 @@ if (!existsSync(engineNodeModules)) {
 const rootEnv = resolve(rootDir, '.env')
 if (existsSync(rootEnv)) {
   try {
-    const { readFileSync } = await import('node:fs')
     const content = readFileSync(rootEnv, 'utf-8')
     for (const line of content.split('\n')) {
       const trimmed = line.trim()
@@ -56,8 +56,13 @@ if (existsSync(rootEnv)) {
         }
       }
     }
-  } catch {}
+  } catch (err) {
+    console.warn('\x1b[33m%s\x1b[0m', `⚠️ [Patze] Warning reading .env: ${err instanceof Error ? err.message : String(err)}`)
+  }
 }
+
+// Ensure Skill Discovery searches Patze's root .agents/skills directory
+process.env.DSH_AGENTS_HOME ??= resolve(rootDir, '.agents')
 
 const args = process.argv.slice(2)
 
@@ -80,13 +85,40 @@ if (args[0] === 'guard' && args[1]) {
   process.exit(0)
 }
 
-const proc = spawn('pnpm', ['dsh', ...args], {
+// Assemble DSH command line with automatic Cordis patch overlay
+const dshArgs = [...args]
+
+// If --patch is not explicitly supplied by user and cordis.yml exists, inject it
+if (!dshArgs.includes('--patch') && existsSync(cordisPatch)) {
+  dshArgs.push('--patch', cordisPatch)
+}
+
+// Default to 'web' profile if no profile or sub-command specified
+if (dshArgs.length === 0 || (dshArgs.length === 2 && dshArgs[0] === '--patch')) {
+  dshArgs.unshift('web')
+}
+
+const proc = spawn('pnpm', ['dsh', ...dshArgs], {
   cwd: engineDir,
   stdio: 'inherit',
   env: process.env,
 })
 
+// Forward termination signals to child process
+const handleSignal = (signal) => {
+  if (!proc.killed) {
+    proc.kill(signal)
+  }
+}
+
+process.on('SIGINT', () => handleSignal('SIGINT'))
+process.on('SIGTERM', () => handleSignal('SIGTERM'))
+
+proc.on('error', (err) => {
+  console.error('\x1b[31m%s\x1b[0m', `❌ [Patze] Process error: ${err.message}`)
+  process.exit(1)
+})
+
 proc.on('exit', (code) => {
   process.exit(code ?? 0)
 })
-
