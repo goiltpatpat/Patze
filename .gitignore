@@ -1,0 +1,30 @@
+# Dependencies & caches
+node_modules/
+.pnpm-store/
+.cache/
+dist/
+dist-exe/
+*.tsbuildinfo
+*.log
+
+# Environment & credentials
+.env
+.env.local
+*.p12
+
+# Runtime state
+.sessions/
+.storages/
+.artifacts/
+.dsh-build/
+tmp/
+
+# Sub-engines and build outputs
+engine/deepseek-harness/node_modules/
+engine/deepseek-harness/.dsh-build/
+engine/deepseek-harness/apps/web/dist/
+
+# OS & Editor
+.DS_Store
+.idea/
+.vscode/

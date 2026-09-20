@@ -1,0 +1,134 @@
+{
+  "mode": "copy",
+  "plugin": "patpat",
+  "schema": 1,
+  "skills": {
+    "patpat": {
+      "SKILL.md": "a627193e09dc4e1759e9bcaa43985c78019b9f00db0e1fc6486dd57b527c9277",
+      "agents/openai.yaml": "da03d69dd62c494124cbb155ecf04da27daf1773e81257bfb699baf1379dcb64"
+    },
+    "patpat-architect": {
+      "SKILL.md": "8990f9bd90da08821228c6872fdc138255dd5251f5e907388355920f04a6d2a6"
+    },
+    "patpat-arena": {
+      "SKILL.md": "9afa479917aff364cedd4869e39695adf017205689855e68e3e99d6a9f7838a2"
+    },
+    "patpat-automation": {
+      "SKILL.md": "7655de0be1894a739468053be26be2795ce6df127572f2714eddb9edaa16ae6a"
+    },
+    "patpat-change": {
+      "SKILL.md": "4331b83a5c07734fd457a707d66f061fe2d39b129ef6ba8fe49dd616e5212676"
+    },
+    "patpat-debug": {
+      "SKILL.md": "47e03b6a34445bce5ecef154dd30eec8e20b84fe9eaf950ccc7fb1f79bfac40b"
+    },
+    "patpat-engineer": {
+      "SKILL.md": "43e9d826d46e8b265979eeec192c0342dda57d0a87e75e7b5466415de06c06f0"
+    },
+    "patpat-eval": {
+      "SKILL.md": "7f0a91c104dcb238095f73cf726d1aca4f77a69df5beb9b81c5cbefb0a75e5d0"
+    },
+    "patpat-impact": {
+      "SKILL.md": "27f70cc13ac8238d531f0d2eba9bce1ae461e9edde22298cb7fa3b274fc0b808"
+    },
+    "patpat-inspect": {
+      "SKILL.md": "ef74a6631c3cf10c526eefea5ca82e1cc99b58f0549e17e69f3c3268cdcd981b",
+      "references/how-report.md": "08bfbc9aa1eebc1795a22a04ceb51c71b7183e9ed2ba8bfe320fd47c19a78cd4",
+      "references/why-report.md": "569f9b976b6d880dc356b6dde46f863dee269604f121f44949b0cd0595ef7381"
+    },
+    "patpat-learn": {
+      "SKILL.md": "bb4d687653020fcad4f41cbe592565e687c66755e15ec8fab7ffab5f7f6ddf30"
+    },
+    "patpat-loop": {
+      "SKILL.md": "65b7f3190afd089238baacc9f1d92ba4f835c1d32e4efd8db2310b47f5172d70",
+      "agents/openai.yaml": "5728ce330d810920a8a767e5456b69e9f8c258c81afd6a5f854557f8b1387ccb",
+      "playbooks/architecture-change.md": "f42498be94031c4032b569dfa5c25b76e46900362276079b85f0fdd548bb6660",
+      "playbooks/arena.md": "040696ef90a515c3713b3506717ca920e10676ccb18f7a2a7c2e9a4115f6012e",
+      "playbooks/authorized-delivery.md": "354f4109949cb020e6003ee522771af9581aaa238c7580f9457b7d7be537b806",
+      "playbooks/automation-design.md": "b0395bfb6afaa59bba945203603b83fba0a95b58b150e4290d5cbe79d1a70033",
+      "playbooks/autopilot.md": "cadaee888648d1a224ba0831fd51f6482e15a4157fc5bf408d84b0fccab4c064",
+      "playbooks/behavior-preserving-refactor.md": "7583382ed485e9c82866b12c46a823bc3c6ff413137495a0646e9aef41d6dcb8",
+      "playbooks/behavioral-eval.md": "666f373147c68beb8b66f49b075ce66a839dd1dd066a789c1d86cb53bf5a33a0",
+      "playbooks/bespoke-workflow.md": "262caaaaaffe1130fa9ada4bac5e4f667891fe4853af456313990aebe901a61d",
+      "playbooks/blast-radius.md": "6d4f211f02aa03a87010aa437c1fd7cd8dfcd60bf5bbee0d0aa9423f9b6c9cb3",
+      "playbooks/bounded-change.md": "1f9e17023db28aad291f49decf6b7e53664ff0f808482ad7e9a746158d3cfd55",
+      "playbooks/default-delivery.md": "8e8be4e1ef2ff7501d3397c85fa1fd430486412ea1085d0e03d4a4014c9ef8a3",
+      "playbooks/defect.md": "4a65e390a264b300a89e5f430302e9a0b063fb3d376a38737e563dc0481ed51f",
+      "playbooks/independent-review.md": "feb8b45823c04d7709ee94a0f99ac7f1bf26e66570fa5d38fb26ad8c827b9374",
+      "playbooks/investigation.md": "7feb2c8369fdb073481f9e826dd38104e4d84d89c1fdfb117ec3b8e55b8c3911",
+      "playbooks/issue-loop.md": "2b8132cb591f25639b17db8e54f4b39954a36ae59113d56fec5a1a5628efaf25",
+      "playbooks/learning.md": "53122e584bcad96340cbffe13e6c95973696775a334335d504444054d12d76ce",
+      "playbooks/metric-hillclimb.md": "e14d68d54384655545ce61161fc19b63f5177df1a4a8bd6e05a786e763a884f3",
+      "playbooks/multi-phase-run.md": "143f98eb0092d033f9051391080d7bd16c76de2bb388e575614310f7753cff68",
+      "playbooks/pause-safely.md": "3b6c5ce3a5c1b5afd1e86a56df21c5ee27022290685aa2618d814490a66a94ae",
+      "playbooks/performance.md": "60f58ffdf92f0a7d4f594ed35190ed4ece9a9a3aeb3b8aefc1183149b824ac1a",
+      "playbooks/pr-babysit.md": "d5da502bcea8e5d8221d23d08f89b502fb7a9677a9235de8c278273bf844ee70",
+      "playbooks/pr-drive.md": "ee94bdf7d151905a04567303c399de3e35cb23e9c89bca572a76fcf6274e9a4c",
+      "playbooks/project-verifier.md": "1cae2b6bc7404504da4ec9afd519dfd458ac8cc748346e1688387a95d3ab2b08",
+      "playbooks/prototype.md": "935e16c221d7050ae14a9d6d3f7c79e79465acb69622cd3db97c3ba6c81995c7",
+      "playbooks/rationale-forensics.md": "5d331eab5be24c4e22324d4945d845cccea69e235f7807ada83239e520fb34ab",
+      "playbooks/regression-first.md": "25dcb342e6ff314efd294a0514d3252b715531f1306cb7d2e9854740d823bd78",
+      "playbooks/runtime-forensics.md": "97c2ed7aca681a56d11aff4b74166ad2eb3fdd39534091f2d9145e0fb096a052",
+      "playbooks/session-takeover.md": "f8f812f47f358717b3d97a697b1cd8aa9207993de4031aebb74dc93c04ce25b9",
+      "playbooks/skill-change.md": "22b1bb0e7743d64194e025e211d54e9b1afd4b90776d71bea299c3c226265029",
+      "playbooks/swarm.md": "49fe0339ab0c45d6df781f582b169c96688c37cb1ac4098f45d356c395e19c87",
+      "playbooks/trace-forensics.md": "bd7307ec230fd2630affd2076943acd22e48259a92d196182d6821dd6e1cefce",
+      "playbooks/visual-equivalence.md": "970fbf1cca2914ffb376d095f379045fa5ebcc29d8318f27963f0eb877a4644f",
+      "playbooks/worktree-cleanup.md": "fcf74967f0cdec85f9fa47d7aef50b2f10409b987b20faa10870f715f18b245f",
+      "principles/boundary-discipline.md": "d16f8d9ee3416edc6f9312f53ecaf789afc53826dfef2a036b0535561cfc9a6b",
+      "principles/earned-parallelism.md": "92a170a0ed11cf99c64d978a8829c280a892e9ce07b2da2c9f342550a692c18a",
+      "principles/encode-lessons.md": "8a4e642503052fc65be7357f5ac540257de2aa1dfa5d72fcc463d02170c976bc",
+      "principles/fix-root-causes.md": "4842f53712a8f945fa982998572dea6a95f2da05ecf55b8e6aed578c54b2ec6c",
+      "principles/idempotent-effects.md": "f340007c9de2a51335c4ba8afa8a1747c717765085e44f0b528cab2d6d15717e",
+      "principles/preserve-safety.md": "aefe88666bf7fe887efd606b52acb1dbb47ff8760a4efe668ec532e627829ea2",
+      "principles/proof-over-proxy.md": "0cac09e7bd4fee2df1a5a99f71aa0e0234729626f40e54f62bef6e792bb2f12f",
+      "principles/repository-truth.md": "b040e7a505f9d35293e8e36d0c17637a57c2428897629a12213f7cf30ccff04b",
+      "principles/sequence-verifiable-units.md": "c3994db07cd48a9f16e13a28abc9b1c8c1a64a84a42233e31bd71aa45a8436ca",
+      "principles/shape-before-logic.md": "00a3f252f227bf878d6024778fe6819f0c91766ddc380e7b82820ac375524c55",
+      "principles/smallest-safe-change.md": "92ddf7402f2dc256e4ce5d568da16621a8e1ac0f3919a5c4893476d6cfe973eb",
+      "references/earned-representation.md": "067ec30793b3ab21e730163819d713432294ad778c29676bdad2fcf5429cb015",
+      "references/execution-graph.md": "581f9f309590864832ae197c920d3348f5de51ac79bb23e7d868524cd0fa719c",
+      "references/operating-protocol.md": "3ec7274e2587bf42b21e1fe09fe35510c8fdfbfda1c483eda06547bdd91b7a3e",
+      "references/route-catalog.md": "77aa9c115d9ef3138da3899a0cf9c873763192065a749ddebba2f97f9eff6b0c"
+    },
+    "patpat-perf": {
+      "SKILL.md": "b95462303337e2d6ebfd704e047dba3d3d43c77fc199984cd01610e32d05762a"
+    },
+    "patpat-plan": {
+      "SKILL.md": "9ad5b15eb50847661356b68ed51c3d4caa0c3e7c4116b7d612c0c75a09b95de7"
+    },
+    "patpat-review": {
+      "SKILL.md": "e181f47e5f08e06bb984c19cdec6fb2347b11bb857af9015b1bb9f5986387509"
+    },
+    "patpat-run": {
+      "SKILL.md": "5dfbf024de9d7c351dd627afcd374b3f727b08eed3fc5be16f2bb4bcd40c6120",
+      "references/decision-trail.md": "1b7d207add7fc456ea08b955e2c990e44fa9796ac007e75bbfe163480bf0b53c",
+      "scripts/decisions.py": "f32714735225a46a0b44c2f835c6dd170d8f5d63abc841e93383ce8ebb1f3a35",
+      "scripts/program_state.py": "97272284c5227c3437bb9780bbd4c72c65542b1906a1ff1a8d3b21fdbeaf3fc9",
+      "scripts/run_state.py": "3ec09ae1a4cd656faee122584f495e69080aab0841c85f8a10432a9463e5314f",
+      "scripts/state_lock.py": "4c32aa44963581af94e2b3c44de3a662e6787f681a38329853a9f3ef6fe5ddf7",
+      "scripts/team_shape.py": "2c165bda192b116f57a261e7315c511328178f1017c8d9dc1bb4cff95aabd572",
+      "scripts/validate_plan.py": "21a6f0a1746b6c288fd9049fe028371f37686c9d86e073f5a9f7f9cbb3ec976b"
+    },
+    "patpat-setup": {
+      "SKILL.md": "edfdff37548db8ea864e8b14a25e610aa239766129356cf8142afc6839d35b58"
+    },
+    "patpat-ship": {
+      "SKILL.md": "ea745b80b6eb413438fa7cfe56091e84a260a371800a6ff5ded1e0c4fd0d0a91",
+      "scripts/github_observe.py": "0b69e14c62850d87ded76d2285158ed9c92c4636cda1ac24afe0444e7a100362",
+      "scripts/pr_watch.py": "6bfb634e3848cf0957ae1ca3f908f7d5314a1c5910bd5afbf4156fe4c1bcd154"
+    },
+    "patpat-skill": {
+      "SKILL.md": "f73ac615ca5164489830b5c0957b2e44d35d7a8112dcd9c65baab7b6e9e1b04a"
+    },
+    "patpat-swarm": {
+      "SKILL.md": "5b9bb622077b7c1725e113319c674be45141fb2f2f2d2828d4bc7e5a91622071"
+    },
+    "patpat-verifier": {
+      "SKILL.md": "a964026e18c44376b947cfaf59317b4c735a155b4c515e532c1a3b332e695829"
+    },
+    "patpat-verify": {
+      "SKILL.md": "4a5e38941dc82a915903aa2d3579d2b52df9c7de3c6014b93e7f682beac72f04"
+    }
+  }
+}

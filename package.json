@@ -1,0 +1,26 @@
+{
+  "name": "patze",
+  "version": "0.1.0",
+  "description": "Patze: Evidence-Driven Autonomous Agent Engineering Platform",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "web": "pnpm --dir engine/deepseek-harness dsh web",
+    "headless": "pnpm --dir engine/deepseek-harness dsh headless",
+    "dsh": "pnpm --dir engine/deepseek-harness dsh",
+    "build": "pnpm --dir engine/deepseek-harness run build",
+    "test": "pnpm --dir engine/deepseek-harness run test",
+    "sync-skills": "python3 plugins/patpat/scripts/install_skills.py --target .agents/skills --mode copy"
+  },
+  "keywords": [
+    "patze",
+    "deepseek-harness",
+    "cordis",
+    "patpat",
+    "autonomous-agents",
+    "evidence-driven"
+  ],
+  "author": "goiltpatpat",
+  "license": "MIT"
+}

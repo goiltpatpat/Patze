@@ -1,0 +1,5 @@
+# Patze Platform Cordis Configuration
+# Defines base services, custom plugins, and skill providers
+
+- id: patze-core
+  name: './src/index.ts'
