@@ -30,31 +30,86 @@ export class JevEngine {
     // 1. If remote Jev / TypeSafe API key is configured, call official TypeSafe System One endpoint
     if (this.apiKey) {
       try {
-        const remoteResult = await this.querySystemOne(prompt, {
+        const state = {
+          request: prompt,
+          context: {
+            engine: 'Patze Autonomous Platform',
+          },
+        }
+
+        const remoteResult = await this.querySystemOne(state, {
           skill: {
             type: 'choice',
-            instructions: 'Select the optimal Patpat autonomous engineering skill for this user request',
-            criteria: {
-              'patpat-debug': 'Investigate and fix bugs, errors, regressions, memory leaks, or failing tests',
-              'patpat-architect': 'Design architecture, data models, schema migrations, or public contracts',
-              'patpat-review': 'Conduct skeptical independent code review and challenge PR diffs',
-              'patpat-ship': 'Commit, land, or merge pull requests with verified changes',
-              'patpat-verify': 'Run acceptance verification against primary runtime surface and test artifacts',
-              'patpat-perf': 'Resource optimization, benchmarks, latency, memory, or CPU performance',
-              'patpat-plan': 'Multi-phase workflow planning or multi-contract sequence design',
-              'patpat-change': 'Bounded feature implementation, refactoring, or minimal diff additions',
-              'patpat-loop': 'General evidence-driven engineering workflow',
+            instructions: {
+              question: 'Which Patpat engineering skill should handle `request`?',
+              focus: 'Select the optimal disciplined skill for the primary intent.',
             },
+            criteria: {
+              'patpat-debug': {
+                what: 'Bugs, errors, exceptions, regressions, crashes, or failing tests',
+                examples: ['Fix null pointer exception', 'Worker crashes on startup', 'Test assertion failed'],
+              },
+              'patpat-architect': {
+                what: 'System architecture, API contracts, schema migrations, and high-level design',
+                examples: ['Design new event broker', 'Migrate users table schema', 'Define REST API contract'],
+              },
+              'patpat-perf': {
+                what: 'Performance bottlenecks, latency, memory spikes, CPU utilization, or numeric optimization',
+                examples: ['Optimize query latency', 'Fix memory leak in buffer pool', 'Improve throughput'],
+              },
+              'patpat-review': {
+                what: 'Independent skeptical review, code challenge, or diff audit',
+                examples: ['Review PR diff', 'Audit security of auth module', 'Challenge verification evidence'],
+              },
+              'patpat-ship': {
+                what: 'Delivery, landing, PR merging, publishing, and deployment',
+                examples: ['Merge PR to main', 'Ship release v1.2', 'Publish package to npm'],
+              },
+              'patpat-verify': {
+                what: 'Acceptance verification against authoritative runtime surface and test artifacts',
+                examples: ['Verify HTTP 200 on endpoint', 'Assert compiler output', 'Run smoke verifier'],
+              },
+              'patpat-plan': {
+                what: 'Multi-phase workflow planning and multi-contract sequence design',
+                examples: ['Create roadmap for migration', 'Plan multi-stage refactor'],
+              },
+              'patpat-change': {
+                what: 'Bounded feature additions, localized refactors, or minimal diff mutations',
+                examples: ['Add dark mode toggle', 'Refactor helper function', 'Implement search input'],
+              },
+              'patpat-loop': {
+                what: 'General evidence-driven engineering workflow',
+                examples: ['Work on this issue', 'Improve the project'],
+              },
+            },
+          },
+          is_urgent: {
+            type: 'noul',
+            instructions: 'Does `request` express urgency, critical production failure, or time-sensitive emergency?',
+          },
+          risk_score: {
+            type: 'score',
+            instructions: 'Rate the technical risk and blast radius implied by `request`',
+            criteria: [
+              'Routine, low-risk query or localized change',
+              'Moderate-risk modification or functional bug',
+              'High-risk architectural change, data mutation, or security boundary',
+            ],
           },
         })
 
         const skillAnswer = remoteResult?.answers?.skill
+        const urgentAnswer = remoteResult?.answers?.is_urgent
+        const riskAnswer = remoteResult?.answers?.risk_score
+
         if (skillAnswer?.choice) {
+          const isUrgent = urgentAnswer?.noul >= 0.7
+          const riskScore = riskAnswer?.score ?? 0
           return {
             skill: skillAnswer.choice,
             confidence: skillAnswer.confidence ?? 0.95,
             intentCategory: 'typesafe-systemone',
-            reasoning: `Selected by TypeSafe Jev (${remoteResult.model || 'jev'}) with calibrated probability ${skillAnswer.probabilities?.[skillAnswer.choice] ?? 1.0}`,
+            reasoning: `TypeSafe Jev (${remoteResult.model || 'jev'}): Calibrated probability ${skillAnswer.probabilities?.[skillAnswer.choice] ?? 1.0} | Risk: ${riskScore} | Urgent: ${isUrgent}`,
             latencyMs: Math.round(performance.now() - startTime),
           }
         }
