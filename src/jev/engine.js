@@ -170,18 +170,126 @@ export class JevEngine {
   }
 
   /**
-   * Hardened Safety Guardrail: Position-insensitive tokenized inspection of shell commands.
+   * Hardened Safety Guardrail: Position-insensitive tokenized inspection of shell commands
+   * with full pipeline splitting, wrapper unwrapping (sudo, eval, sh -c), and quote normalization.
    * @param {string} command
    * @returns {Promise<import('./types.js').SafetyCheckResult>}
    */
   async checkSafety(command) {
     const startTime = performance.now()
     const trimmed = command.trim()
-    const lower = trimmed.toLowerCase()
-    const tokens = lower.split(/\s+/).filter(Boolean)
 
-    // Check 1: Critical destructive file deletion
-    // Catch: rm -rf /, rm -r -f /, rm -fr *, rm -rf ./*, rm -rf ~
+    // 1. Split compound command pipelines (;, &&, ||, |, &, newlines)
+    const rawSegments = trimmed.split(/(?:;|&&|\|\||&|\n)/).map(s => s.trim()).filter(Boolean)
+
+    for (const segment of rawSegments) {
+      const segResult = this._evaluateCommandSegment(segment)
+      if (!segResult.safe) {
+        return {
+          ...segResult,
+          latencyMs: Math.round(performance.now() - startTime),
+        }
+      }
+    }
+
+    return {
+      safe: true,
+      riskLevel: 'low',
+      requiresConfirmation: false,
+      reason: 'Safe execution parameters validated',
+      latencyMs: Math.round(performance.now() - startTime),
+    }
+  }
+
+  /**
+   * Internal segment evaluator that recursively unwraps execution prefixes.
+   * @param {string} segment
+   * @returns {{ safe: boolean, riskLevel: string, requiresConfirmation: boolean, reason: string }}
+   */
+  _evaluateCommandSegment(segment) {
+    const trimmed = segment.trim()
+    const lower = trimmed.toLowerCase()
+
+    // Global Regex Pattern Checks (AgentShield & Obfuscation)
+    if (
+      /(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
+      /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed) ||
+      /base64\s+(-d|--decode)\s*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
+      /:\(\)\s*\{\s*:\|:&\s*\};:/i.test(trimmed) // Fork bomb
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Untrusted pipe-to-shell or obfuscated execution pattern detected',
+      }
+    }
+
+    // Secret and credential exfiltration guardrail (precision hardened against .env templates)
+    if (
+      /\b(cat|head|tail|more|less|grep)\s+.*(\.ssh\/id_|(?<![\w-])\.pem\b|(?<![\w-])\.key\b|\.env(\.(local|prod|production|dev|development))?\b(?!\.(example|sample|template)))/i.test(trimmed) ||
+      /(curl|wget|nc|ncat)\s+.*(@.*\.env|(\$|%)(DEEPSEEK|OPENAI|ANTHROPIC|API_KEY|SECRET|TOKEN))/i.test(trimmed)
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Potential credential or secret exfiltration detected',
+      }
+    }
+
+    // Privileged system path mutation
+    if (
+      /(>\s*|tee\s+(-\w+\s+)?)\/(etc\/(passwd|shadow|sudoers)|boot|sys|proc)/i.test(trimmed) ||
+      /\bchmod\s+[0-7]{3,4}\s+\/etc\/(passwd|shadow|sudoers)\b/i.test(trimmed)
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Privileged system path mutation or permission tampering detected',
+      }
+    }
+
+    // Database drop/truncate
+    if (/\b(drop|truncate)\s+(database|schema|table)\b/i.test(trimmed)) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Database destruction statement detected',
+      }
+    }
+
+    // Tokenized Analysis with wrapper unwrapping
+    let tokens = lower.split(/\s+/).filter(Boolean).map(t => t.replace(/^["'](.*)["']$/, '$1'))
+
+    // Strip execution wrappers (sudo, nohup, exec, eval, command, builtin, env vars)
+    while (tokens.length > 0 && (
+      tokens[0] === 'sudo' ||
+      tokens[0] === 'nohup' ||
+      tokens[0] === 'exec' ||
+      tokens[0] === 'eval' ||
+      tokens[0] === 'command' ||
+      tokens[0] === 'builtin' ||
+      tokens[0] === 'xargs' ||
+      /^[a-z_][a-z0-9_]*=/.test(tokens[0])
+    )) {
+      tokens.shift()
+    }
+
+    // If subshell call: sh -c "...", bash -c "...", zsh -c "...", recursively unwrap inner command
+    if (tokens.length >= 3 && (tokens[0] === 'sh' || tokens[0] === 'bash' || tokens[0] === 'zsh') && tokens[1] === '-c') {
+      const inner = tokens.slice(2).join(' ').replace(/^["'](.*)["']$/, '$1')
+      return this._evaluateCommandSegment(inner)
+    }
+
+    // Strip path prefix from binary: /bin/rm -> rm, /usr/bin/git -> git
+    if (tokens.length > 0) {
+      tokens[0] = tokens[0].replace(/^.*[\\/]/, '')
+    }
+
+    // Check: Critical destructive file deletion
     if (tokens[0] === 'rm') {
       const hasRecursive = tokens.some(t => t === '-r' || t === '-R' || (t.startsWith('-') && t.includes('r')))
       const hasForce = tokens.some(t => t === '-f' || (t.startsWith('-') && t.includes('f')))
@@ -194,24 +302,21 @@ export class JevEngine {
           riskLevel: 'critical',
           requiresConfirmation: true,
           reason: 'Catastrophic destructive recursive deletion detected',
-          latencyMs: Math.round(performance.now() - startTime),
         }
       }
     }
 
-    // Check 2: Destructive disk/filesystem formatting
+    // Check: Destructive disk/filesystem formatting
     if (tokens.some(t => t === 'mkfs' || t.startsWith('mkfs.') || (t === 'dd' && lower.includes('if=')))) {
       return {
         safe: false,
         riskLevel: 'critical',
         requiresConfirmation: true,
         reason: 'Raw disk write or formatting command detected',
-        latencyMs: Math.round(performance.now() - startTime),
       }
     }
 
-    // Check 3: Git force push to default/main branch (position-insensitive)
-    // Catch: git push origin main --force, git push -f origin main, git push origin main -f, git push --force origin main
+    // Check: Git force push to default/main branch
     if (tokens[0] === 'git' && tokens.includes('push')) {
       const hasForceFlag = tokens.some(t => t === '--force' || t === '-f' || t.startsWith('--force-with-lease'))
       const targetsMain = tokens.some(t => t === 'main' || t === 'master' || t === 'HEAD')
@@ -221,73 +326,17 @@ export class JevEngine {
           riskLevel: 'critical',
           requiresConfirmation: true,
           reason: 'Force push to protected primary branch detected',
-          latencyMs: Math.round(performance.now() - startTime),
         }
       }
     }
 
-    // Check 4: Hard git resets or clean that destroy uncommitted work
+    // Check: Hard git resets or clean that destroy uncommitted work
     if (tokens[0] === 'git' && (lower.includes('reset --hard') || lower.includes('clean -fdx') || lower.includes('clean -dfx'))) {
       return {
         safe: false,
         riskLevel: 'high',
         requiresConfirmation: true,
         reason: 'Irreversible destruction of uncommitted local working tree changes',
-        latencyMs: Math.round(performance.now() - startTime),
-      }
-    }
-
-    // Check 5: Database drop/truncate
-    if (/\b(drop|truncate)\s+(database|schema|table)\b/i.test(trimmed)) {
-      return {
-        safe: false,
-        riskLevel: 'critical',
-        requiresConfirmation: true,
-        reason: 'Database destruction statement detected',
-        latencyMs: Math.round(performance.now() - startTime),
-      }
-    }
-    // Check 6 (AgentShield): Remote code execution via pipe-to-shell or obfuscated base64 execution
-    if (
-      /(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
-      /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed) ||
-      /base64\s+(-d|--decode)\s*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
-      /:\(\)\s*\{\s*:\|:&\s*\};:/i.test(trimmed) // Fork bomb
-    ) {
-      return {
-        safe: false,
-        riskLevel: 'critical',
-        requiresConfirmation: true,
-        reason: 'Untrusted pipe-to-shell or obfuscated execution pattern detected',
-        latencyMs: Math.round(performance.now() - startTime),
-      }
-    }
-
-    // Check 7 (AgentShield): Secret and credential exfiltration guardrail (precision hardened)
-    if (
-      /\bcat\s+.*(\.ssh\/id_|(?<![\w-])\.pem\b|(?<![\w-])\.key\b|\.env(\.(local|prod|production|dev|development))?\b(?!\.(example|sample|template)))/i.test(trimmed) ||
-      /(curl|wget|nc|ncat)\s+.*(@.*\.env|(\$|%)(DEEPSEEK|OPENAI|ANTHROPIC|API_KEY|SECRET|TOKEN))/i.test(trimmed)
-    ) {
-      return {
-        safe: false,
-        riskLevel: 'critical',
-        requiresConfirmation: true,
-        reason: 'Potential credential or secret exfiltration detected',
-        latencyMs: Math.round(performance.now() - startTime),
-      }
-    }
-
-    // Check 8 (AgentShield): Privileged system path mutation
-    if (
-      /(>\s*|tee\s+(-\w+\s+)?)\/(etc\/(passwd|shadow|sudoers)|boot|sys|proc)/i.test(trimmed) ||
-      /\bchmod\s+[0-7]{3,4}\s+\/etc\/(passwd|shadow|sudoers)\b/i.test(trimmed)
-    ) {
-      return {
-        safe: false,
-        riskLevel: 'critical',
-        requiresConfirmation: true,
-        reason: 'Privileged system path mutation or permission tampering detected',
-        latencyMs: Math.round(performance.now() - startTime),
       }
     }
 
@@ -296,7 +345,6 @@ export class JevEngine {
       riskLevel: 'low',
       requiresConfirmation: false,
       reason: 'Safe execution parameters validated',
-      latencyMs: Math.round(performance.now() - startTime),
     }
   }
 
@@ -330,9 +378,15 @@ export class JevEngine {
     const hasActiveFailures = exitCode !== 0
       || /\bfailed:\s*[1-9]\d*\b/i.test(textOutput)
       || /\b[1-9]\d*\s+failed\b/i.test(textOutput)
+      || /\b[1-9]\d*\s+error(s)?\b/i.test(textOutput)
       || /\bassertionerror\b/i.test(textOutput)
       || /\bpanic:\s+/i.test(textOutput)
       || /\bfail:\s+/i.test(textOutput)
+      || /\bunhandled(promiserejection|exception)\b/i.test(textOutput)
+      || /\b(typeerror|syntaxerror|referenceerror):\s+/i.test(textOutput)
+      || /\bts[0-9]{4,5}:\s+/i.test(textOutput)
+      || /\bcompilation failed\b/i.test(textOutput)
+      || /\bsegmentation fault\b/i.test(textOutput)
 
     // 2. Parse contract clauses
     let contractClauses = []
