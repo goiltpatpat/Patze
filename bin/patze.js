@@ -85,6 +85,17 @@ if (args[0] === 'guard' && args[1]) {
   process.exit(0)
 }
 
+if (args[0] === 'evaluate' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const outputText = args[1]
+  const contract = args.slice(2).join(' ') || 'execution succeeds without errors'
+  const result = await engine.evaluateProof(outputText, contract)
+  console.log('\x1b[36m%s\x1b[0m', '⚖️ [Patze Jev System 1] Proof Evaluation Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
 // Fast-path: Update and synchronize Patpat skills from upstream repository
 if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
   console.log('\x1b[36m%s\x1b[0m', '🔄 [Patze] Updating Patpat submodule from upstream (main)...')

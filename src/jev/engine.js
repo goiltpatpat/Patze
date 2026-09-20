@@ -453,7 +453,32 @@ export class JevEngine {
 
     const total = contractClauses.length || 1
     const score = passed.length / total
-    const satisfied = score >= 0.75 && !hasActiveFailures
+    let satisfied = score >= 0.75 && !hasActiveFailures
+
+    // Optional: TypeSafe Jev Semantic Verification Layer (when apiKey is available)
+    if (this.apiKey && !hasActiveFailures && textOutput.trim().length > 10) {
+      try {
+        const jevEval = await this.querySystemOne(
+          `Contract Requirements:\n${contractClauses.join('\n')}\n\nActual Execution Output:\n${textOutput.slice(-1500)}`,
+          {
+            is_satisfied: {
+              type: 'noul',
+              instructions: 'Does the actual execution output provide verifiable empirical evidence that the contract requirements were fully met without errors or unhandled failures?',
+            },
+          }
+        )
+
+        if (typeof jevEval?.answers?.is_satisfied?.noul === 'number') {
+          const probability = jevEval.answers.is_satisfied.noul
+          if (probability < 0.35) {
+            satisfied = false
+            failed.push(`TypeSafe Jev rejected proof confidence (${probability})`)
+          }
+        }
+      } catch {
+        // Fall back cleanly to deterministic evaluation
+      }
+    }
 
     return {
       satisfied,
