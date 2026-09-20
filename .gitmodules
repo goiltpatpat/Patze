@@ -1,6 +1,9 @@
 [submodule "engine/deepseek-harness"]
 	path = engine/deepseek-harness
 	url = https://github.com/deepseek-ai/deepseek-harness.git
+	ignore = dirty
 [submodule "plugins/patpat"]
 	path = plugins/patpat
 	url = https://github.com/goiltpatpat/patpat.git
+	ignore = dirty
+
