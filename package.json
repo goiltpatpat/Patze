@@ -9,6 +9,8 @@
     "patze": "./bin/patze.js"
   },
   "scripts": {
+    "setup": "git submodule update --init --recursive && pnpm --dir engine/deepseek-harness install && pnpm build",
+    "postinstall": "git submodule update --init --recursive",
     "web": "pnpm --dir engine/deepseek-harness dsh web",
     "headless": "pnpm --dir engine/deepseek-harness dsh headless",
     "dsh": "pnpm --dir engine/deepseek-harness dsh",

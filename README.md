@@ -77,12 +77,24 @@ Patze loads 22 evidence-driven engineering skills directly into agent sessions f
 
 ### Installation
 
+Patze includes DeepSeek Harness and Patpat skills as decoupled submodules. You can install via either method:
+
+**Method 1: Recursive Clone (Fastest)**
 ```sh
-git clone git@github.com:goiltpatpat/Patze.git
+git clone --recursive https://github.com/goiltpatpat/Patze.git
 cd Patze
-pnpm install
-pnpm run build
+pnpm setup
 ```
+
+**Method 2: Standard Clone (Auto-Bootstrapped)**
+```sh
+git clone https://github.com/goiltpatpat/Patze.git
+cd Patze
+# pnpm setup automatically initializes submodules, installs dependencies, and builds
+pnpm setup
+```
+
+> **Smart Launcher:** The CLI binary `./bin/patze.js` automatically self-heals uninitialized submodules and missing dependencies when executed!
 
 ### Configure Environment
 
@@ -93,15 +105,19 @@ cp .env.example .env
 ### Launch Web Console
 
 ```sh
-pnpm dsh web
+pnpm web
+# Or run with the standalone binary:
+./bin/patze.js web
 ```
 
-The Web UI launches at `http://127.0.0.1:3080`. Pass `--no-open` for remote or SSH environments.
+The Web UI launches at `http://127.0.0.1:3080`. Pass `--no-open` for remote or headless environments.
 
-### Headless Execution
+### Headless CLI Execution
 
 ```sh
-pnpm dsh --profile headless "Analyze repository architecture and report findings"
+pnpm headless -- "Analyze repository architecture and report findings"
+# Or:
+./bin/patze.js --profile headless "Analyze repository architecture and report findings"
 ```
 
 ---

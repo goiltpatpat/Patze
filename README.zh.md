@@ -77,12 +77,24 @@ Patze 在 `.agents/skills` 目录中为会话加载 22 项证据驱动的工程�
 
 ### Installation
 
+Patze 将 DeepSeek Harness 与 Patpat Skills 作为独立子模块解耦管理。支持两种安装方式：
+
+**方式 1：递归克隆（推荐，最快）**
 ```sh
-git clone git@github.com:goiltpatpat/Patze.git
+git clone --recursive https://github.com/goiltpatpat/Patze.git
 cd Patze
-pnpm install
-pnpm run build
+pnpm setup
 ```
+
+**方式 2：普通克隆（智能自启）**
+```sh
+git clone https://github.com/goiltpatpat/Patze.git
+cd Patze
+# pnpm setup 将自动拉取子模块、安装依赖并完成构建
+pnpm setup
+```
+
+> **Smart Launcher:** CLI 启动器 `./bin/patze.js` 会在执行时自动检测并初始化未下载的子模块与缺失依赖！
 
 ### Configure Environment
 
@@ -93,15 +105,19 @@ cp .env.example .env
 ### Launch Web Console
 
 ```sh
-pnpm dsh web
+pnpm web
+# 或使用独立可执行文件：
+./bin/patze.js web
 ```
 
-Web UI 将运行在 `http://127.0.0.1:3080`。在远程或 SSH 环境下可附加 `--no-open` 参数。
+Web UI 将运行在 `http://127.0.0.1:3080`。在远程或无桌面环境下可附加 `--no-open` 参数。
 
-### Headless Execution
+### Headless CLI Execution
 
 ```sh
-pnpm dsh --profile headless "Analyze repository architecture and report findings"
+pnpm headless -- "Analyze repository architecture and report findings"
+# 或：
+./bin/patze.js --profile headless "Analyze repository architecture and report findings"
 ```
 
 ---
