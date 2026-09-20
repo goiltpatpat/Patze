@@ -38,6 +38,27 @@ if (!existsSync(engineNodeModules)) {
   }
 }
 
+// Automatically load root .env credentials if present
+const rootEnv = resolve(rootDir, '.env')
+if (existsSync(rootEnv)) {
+  try {
+    const { readFileSync } = await import('node:fs')
+    const content = readFileSync(rootEnv, 'utf-8')
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
+      const eqIdx = trimmed.indexOf('=')
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim()
+        const val = trimmed.slice(eqIdx + 1).trim().replace(/^["'](.*)["']$/, '$1')
+        if (key && process.env[key] === undefined) {
+          process.env[key] = val
+        }
+      }
+    }
+  } catch {}
+}
+
 const args = process.argv.slice(2)
 const proc = spawn('pnpm', ['dsh', ...args], {
   cwd: engineDir,
