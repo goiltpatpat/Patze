@@ -247,21 +247,26 @@ export class JevEngine {
         latencyMs: Math.round(performance.now() - startTime),
       }
     }
-    // Check 6 (AgentShield): Remote code execution via pipe-to-shell (curl/wget piped to bash/sh/python)
-    if (/(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) || /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed)) {
+    // Check 6 (AgentShield): Remote code execution via pipe-to-shell or obfuscated base64 execution
+    if (
+      /(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
+      /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed) ||
+      /base64\s+(-d|--decode)\s*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
+      /:\(\)\s*\{\s*:\|:&\s*\};:/i.test(trimmed) // Fork bomb
+    ) {
       return {
         safe: false,
         riskLevel: 'critical',
         requiresConfirmation: true,
-        reason: 'Remote code execution via pipe-to-shell detected (untrusted script piping)',
+        reason: 'Untrusted pipe-to-shell or obfuscated execution pattern detected',
         latencyMs: Math.round(performance.now() - startTime),
       }
     }
 
-    // Check 7 (AgentShield): Secret and credential exfiltration guardrail
+    // Check 7 (AgentShield): Secret and credential exfiltration guardrail (precision hardened)
     if (
-      /\bcat\s+.*(\.ssh\/id_|\.pem|\.key|\.env\b)/i.test(trimmed) ||
-      /(curl|wget|nc|ncat)\s+.*(@\.env|(\$|%)(DEEPSEEK|OPENAI|ANTHROPIC|API_KEY|SECRET|TOKEN))/i.test(trimmed)
+      /\bcat\s+.*(\.ssh\/id_|(?<![\w-])\.pem\b|(?<![\w-])\.key\b|\.env(\.(local|prod|production|dev|development))?\b(?!\.(example|sample|template)))/i.test(trimmed) ||
+      /(curl|wget|nc|ncat)\s+.*(@.*\.env|(\$|%)(DEEPSEEK|OPENAI|ANTHROPIC|API_KEY|SECRET|TOKEN))/i.test(trimmed)
     ) {
       return {
         safe: false,
