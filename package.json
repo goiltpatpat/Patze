@@ -5,6 +5,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.7.0",
+  "bin": {
+    "patze": "./bin/patze.js"
+  },
   "scripts": {
     "web": "pnpm --dir engine/deepseek-harness dsh web",
     "headless": "pnpm --dir engine/deepseek-harness dsh headless",
