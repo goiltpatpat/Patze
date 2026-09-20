@@ -12,9 +12,10 @@ export class JevEngine {
    * @param {import('./types.js').JevConfig} [config]
    */
   constructor(config = {}) {
-    this.apiKey = config.apiKey || process.env.JEV_API_KEY || ''
-    this.baseUrl = config.baseUrl || process.env.JEV_BASE_URL || 'https://api.typesafe.ai/v1'
+    this.apiKey = config.apiKey || process.env.JEV_API_KEY || process.env.TYPESAFE_API_KEY || ''
+    this.baseUrl = config.baseUrl || process.env.JEV_BASE_URL || process.env.TYPESAFE_BASE_URL || 'https://api.typesafe.ai/v1'
     this.timeoutMs = config.timeoutMs || 2500
+    this.model = config.model || 'jev-latest'
   }
 
   /**
@@ -26,28 +27,39 @@ export class JevEngine {
     const startTime = performance.now()
     const lower = prompt.toLowerCase()
 
-    // 1. If remote Jev API key is configured, call remote Jev endpoint
+    // 1. If remote Jev / TypeSafe API key is configured, call official TypeSafe System One endpoint
     if (this.apiKey) {
       try {
-        const remoteResult = await this.queryRemoteJev('skill-route', {
-          prompt,
-          availableSkills: [
-            'patpat-architect', 'patpat-plan', 'patpat-change', 'patpat-engineer',
-            'patpat-debug', 'patpat-inspect', 'patpat-verify', 'patpat-verifier',
-            'patpat-review', 'patpat-ship', 'patpat-perf', 'patpat-arena',
-            'patpat-swarm', 'patpat-run', 'patpat-learn', 'patpat-skill',
-            'patpat-setup', 'patpat-automation', 'patpat-impact', 'patpat-eval',
-            'patpat-loop', 'patpat'
-          ]
+        const remoteResult = await this.querySystemOne(prompt, {
+          skill: {
+            type: 'choice',
+            instructions: 'Select the optimal Patpat autonomous engineering skill for this user request',
+            criteria: {
+              'patpat-debug': 'Investigate and fix bugs, errors, regressions, memory leaks, or failing tests',
+              'patpat-architect': 'Design architecture, data models, schema migrations, or public contracts',
+              'patpat-review': 'Conduct skeptical independent code review and challenge PR diffs',
+              'patpat-ship': 'Commit, land, or merge pull requests with verified changes',
+              'patpat-verify': 'Run acceptance verification against primary runtime surface and test artifacts',
+              'patpat-perf': 'Resource optimization, benchmarks, latency, memory, or CPU performance',
+              'patpat-plan': 'Multi-phase workflow planning or multi-contract sequence design',
+              'patpat-change': 'Bounded feature implementation, refactoring, or minimal diff additions',
+              'patpat-loop': 'General evidence-driven engineering workflow',
+            },
+          },
         })
-        if (remoteResult) {
+
+        const skillAnswer = remoteResult?.answers?.skill
+        if (skillAnswer?.choice) {
           return {
-            ...remoteResult,
+            skill: skillAnswer.choice,
+            confidence: skillAnswer.confidence ?? 0.95,
+            intentCategory: 'typesafe-systemone',
+            reasoning: `Selected by TypeSafe Jev (${remoteResult.model || 'jev'}) with calibrated probability ${skillAnswer.probabilities?.[skillAnswer.choice] ?? 1.0}`,
             latencyMs: Math.round(performance.now() - startTime),
           }
         }
       } catch {
-        // Fall through to heuristic classifier
+        // Fall through seamlessly to local heuristic classifier
       }
     }
 
@@ -455,18 +467,29 @@ export class JevEngine {
     }
   }
 
-  async queryRemoteJev(action, payload) {
+  /**
+   * Remote TypeSafe System One API Client:
+   * Formats questions according to the official TypeSafe System One API contract (/v1/systemone)
+   * @param {string} state - Context/state for the judgment
+   * @param {Record<string, any>} questions - Dictionary of Choice, Score, or Noul questions
+   * @returns {Promise<any>}
+   */
+  async querySystemOne(state, questions) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs)
 
     try {
-      const res = await fetch(`${this.baseUrl}/decisions/${action}`, {
+      const res = await fetch(`${this.baseUrl}/systemone`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          state,
+          model: this.model,
+          questions,
+        }),
         signal: controller.signal,
       })
 
