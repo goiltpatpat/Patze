@@ -16,6 +16,8 @@
     "dsh": "./bin/patze.js",
     "build": "pnpm --dir engine/deepseek-harness run build",
     "test": "pnpm --dir engine/deepseek-harness run test",
+    "test:imagine": "node --test src/tools/xai-imagine.test.js",
+    "test:jev": "node --test src/jev/steer.test.js",
     "update-skills": "./bin/patze.js update-skills",
     "sync-skills": "./bin/patze.js update-skills"
   },

@@ -115,6 +115,40 @@ if (args[0] === 'evaluate' && args[1]) {
   process.exit(0)
 }
 
+if (args[0] === 'imagine-video' && args[1]) {
+  const { generateImagineVideo } = await import('../src/tools/xai-imagine.js')
+  const result = await generateImagineVideo({
+    prompt: args.slice(1).join(' '),
+    duration_seconds: 5,
+    aspect_ratio: '16:9',
+    resolution: '480p',
+  })
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(result.success ? 0 : 1)
+}
+
+if (args[0] === 'imagine-image' && args[1]) {
+  const { generateImagineImage } = await import('../src/tools/xai-imagine.js')
+  const result = await generateImagineImage({
+    prompt: args.slice(1).join(' '),
+    aspect_ratio: '1:1',
+  })
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(result.success ? 0 : 1)
+}
+
+if (args[0] === 'stats' || args[0] === 'economy') {
+  console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze Architecture] Token Efficiency & System 1 Engine Status:')
+  console.log('  • DeepSeek Harness Spill Policy: Active (Spill threshold: 50,000 bytes to disk)')
+  console.log('  • DeepSeek Harness Tool Result Pruner: Active (Pruning window: 8,192 chars)')
+  console.log('  • DeepSeek Harness Image Offload: Active (Vision token auto-reclamation)')
+  console.log('  • DeepSeek Harness Compaction: Active (Context window lifecycle + /compact)')
+  console.log('  • Patze Jev AgentShield Gate: Active (Zero-token pre-execution safety check)')
+  console.log('  • Patze Jev Proof Diagnostic Gate: Active (Zero-token post-execution watcher)')
+  console.log('  • Patze Jev Intent Router: Active (Conversational fast-path + calibrated skill gating)')
+  process.exit(0)
+}
+
 // Fast-path: Update and synchronize Patpat skills from upstream repository
 if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
   console.log('\x1b[36m%s\x1b[0m', '🔄 [Patze] Updating Patpat submodule from upstream (main)...')

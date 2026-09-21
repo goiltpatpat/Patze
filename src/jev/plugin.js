@@ -4,16 +4,18 @@
  * Native high-performance ESM plugin:
  * 1. Active Pre-Tool Execution Guardrail (tools/pre-execute waterfall gate: blocks destructive mutations, fork-bombs, secret exfiltration)
  * 2. Active Post-Tool Proof Evaluation (tools/post-execute: detects compiler diagnostics and silent failures)
- * 3. Active System 1 Intent Steering (agent/pre-step: injects Patpat skill guidance and risk signals into agent context)
+ * 3. System 1 route on agent/pre-step (once per turn; media stays silent)
  * 4. Registered Cordis Microkernel Service `ctx.jev`
  */
 
 import { JevEngine } from './engine.js'
+import { latestUserText, shouldSteer, steerMode } from './steer.js'
 
 export const name = 'patze-jev'
 
 export function apply(ctx, config = {}) {
   const engine = new JevEngine(config)
+  const steered = new WeakMap()
 
   const service = {
     engine,
@@ -61,10 +63,19 @@ export function apply(ctx, config = {}) {
             .filter(Boolean)
             .join('\n')
 
-          if (text && (/TS[0-9]{4,5}:/.test(text) || /SyntaxError:/.test(text) || /UnhandledPromiseRejection/i.test(text))) {
+          if (text && (/TS[0-9]{4,5}:/.test(text) || /SyntaxError:/.test(text) || /UnhandledPromiseRejection/i.test(text) || /AssertionError/i.test(text))) {
             const proof = await engine.evaluateProof(text, 'clean execution without compiler diagnostics or unhandled exceptions')
             if (!proof.satisfied && proof.failedAssertions.length > 0) {
               console.warn('\x1b[33m%s\x1b[0m', `⚠️ [Patze Jev Proof Watcher]: Diagnostic issues detected in tool output: ${proof.failedAssertions.join(', ')}`)
+              if (exec?.agent && typeof exec.agent.inject === 'function') {
+                exec.agent.inject({
+                  content: [{
+                    type: 'text',
+                    text: `[Patze Jev Diagnostic Gate] Warning: Tool execution produced diagnostics (${proof.failedAssertions.join('; ')}). Focus on resolving this failure before advancing.`,
+                  }],
+                  source: { kind: 'plugin', plugin: 'patze-jev' },
+                })
+              }
             }
           }
         }
@@ -74,40 +85,34 @@ export function apply(ctx, config = {}) {
       return decision
     })
 
-    // ⚡ Active Hook 3: Real-time System 1 Fast Intent Routing & Context Steering
-    ctx.on('agent/pre-step', async ({ agent, messages, signal }, next) => {
+    ctx.on('agent/pre-step', async ({ agent, messages, turn, step }, next) => {
       const decision = await next()
       if (decision?.kind === 'reject') return decision
 
       try {
-        if (Array.isArray(messages)) {
-          const userMsg = typeof messages.findLast === 'function'
-            ? messages.findLast(m => m?.source?.kind === 'user' || m?.role === 'user')
-            : messages[messages.length - 1]
+        const userText = latestUserText(messages)
+        if (!userText || userText.length <= 3 || userText.startsWith('/')) return decision
+        if (!shouldSteer({ step, turn, fingerprint: userText, prior: agent ? steered.get(agent) : undefined })) {
+          return decision
+        }
+        if (agent) steered.set(agent, { turn, fingerprint: userText })
 
-          let userText = ''
-          if (Array.isArray(userMsg?.content)) {
-            userText = userMsg.content.map(c => c?.text || '').join(' ')
-          } else if (typeof userMsg?.content === 'string') {
-            userText = userMsg.content
-          }
-
-          if (userText && userText.trim().length > 5 && !userText.trim().startsWith('/')) {
-            const route = await engine.routeSkill(userText)
-            if (route && route.confidence >= 0.85 && route.skill) {
-              console.log('\x1b[35m%s\x1b[0m', `⚡ [Patze Jev System 1 Route]: Inferred "${route.skill}" (Confidence: ${route.confidence}, Latency: ${route.latencyMs}ms)`)
-
-              // Inject System 1 skill context directly into agent if available
-              if (agent && typeof agent.inject === 'function') {
-                agent.inject({
-                  content: [{
-                    type: 'text',
-                    text: `[Patze Jev System 1 Recommendation]\n• Intent Skill: ${route.skill} (Confidence: ${Math.round(route.confidence * 100)}%)\n• Protocol: Apply "${route.skill}" evidence loop. Always verify changes on authoritative runtime surfaces before claiming completion.`,
-                  }],
-                  source: { kind: 'plugin', plugin: 'patze-jev' },
-                })
-              }
-            }
+        const route = await engine.routeSkill(userText)
+        const mode = steerMode(route)
+        if (route?.intentCategory === 'video-generation' || route?.intentCategory === 'image-generation') {
+          const toolName = route.intentCategory === 'video-generation' ? 'xai_imagine_video' : 'xai_imagine_image'
+          const modelName = route.intentCategory === 'video-generation' ? 'grok-imagine-video-1.5' : 'grok-imagine-image-2.0'
+          console.log('\x1b[35m%s\x1b[0m', `🎨 [Patze Jev]: ${toolName} (${modelName})`)
+        } else if (mode === 'skill') {
+          console.log('\x1b[35m%s\x1b[0m', `⚡ [Patze Jev]: ${route.skill} (${Math.round(route.confidence * 100)}%)`)
+          if (agent && typeof agent.inject === 'function') {
+            agent.inject({
+              content: [{
+                type: 'text',
+                text: `[Patze Jev]\n• Skill: ${route.skill}\n• Verify on the authoritative runtime surface before claiming completion.`,
+              }],
+              source: { kind: 'plugin', plugin: 'patze-jev' },
+            })
           }
         }
       } catch {

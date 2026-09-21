@@ -13,7 +13,7 @@ export interface JevDecision<T = unknown> {
 }
 
 export interface SkillRouteResult {
-  skill: string
+  skill: string | null
   confidence: number
   intentCategory: string
   reasoning: string
