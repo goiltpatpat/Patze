@@ -217,14 +217,14 @@ FRAME ──► INSPECT ──► PROOF CONTRACT ──► ACT ──► VERIFY 
 ## Quality Assurance & Verification
 
 ```sh
-# Run Patze native unit test suite (Jev steer policy + Imagine client)
-node --test src/tools/xai-imagine.test.js src/jev/steer.test.js
+# Run Patze native unit test suite (Jev Router, Steer Policy, Imagine Suite)
+pnpm run test:unit
 
 # Update and synchronize Patpat skills from upstream
 pnpm update-skills
 
 # Syntax validation across all core modules
-node --check src/index.js && node --check src/jev/engine.js && node --check src/tools/xai-imagine.js
+node --check src/index.js && node --check src/jev/engine.js && node --check src/jev/router.js && node --check src/tools/xai-imagine.js
 
 # Full engine test suite
 pnpm test
@@ -234,13 +234,15 @@ Automated daily skill synchronization is maintained via [.github/workflows/sync-
 
 ---
 
-## Enterprise Compatibility & Links
+## Technical Resources & Architecture Guides
 
-- **Repository**: [https://github.com/goiltpatpat/Patze](https://github.com/goiltpatpat/Patze)
+- **Jev System 1 Decision Architecture & Steerable Reranking**: [`docs/resources/jev-system1-architecture.md`](docs/resources/jev-system1-architecture.md)
 - **Engine**: [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 - **Workflows**: [Patpat](https://github.com/goiltpatpat/patpat)
 - **Microkernel**: [Cordis Core](https://cordis.moe/)
+- **TypeSafe AI**: [TypeSafe AI Documentation](https://docs.typesafe.ai/)
 
 ## License
 
 Released under the [MIT License](LICENSE).
+

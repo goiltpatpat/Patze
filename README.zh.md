@@ -208,17 +208,17 @@ FRAME (界定) ──► INSPECT (审查) ──► PROOF CONTRACT (证明契约
 
 ---
 
-## 质量保证与测试
+## 质量保证与测试验证
 
 ```sh
-# 运行 Patze 单元测试套件 (Jev 策略 + Imagine 客户端)
-node --test src/tools/xai-imagine.test.js src/jev/steer.test.js
+# 运行 Patze 原生单元测试套件（Jev 路由、导向策略与 Imagine 套件）
+pnpm run test:unit
 
 # 从上游同步并更新 Patpat 技能
 pnpm update-skills
 
 # 核心模块语法静态校验
-node --check src/index.js && node --check src/jev/engine.js && node --check src/tools/xai-imagine.js
+node --check src/index.js && node --check src/jev/engine.js && node --check src/jev/router.js && node --check src/tools/xai-imagine.js
 
 # 完整引擎测试套件
 pnpm test
@@ -228,12 +228,13 @@ pnpm test
 
 ---
 
-## 链接
+## 技术架构文档与资源
 
-- **仓库**: [https://github.com/goiltpatpat/Patze](https://github.com/goiltpatpat/Patze)
+- **Jev System 1 决策架构与可控重排序**: [`docs/resources/jev-system1-architecture.md`](docs/resources/jev-system1-architecture.md)
 - **底层引擎**: [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 - **工程技能**: [Patpat](https://github.com/goiltpatpat/patpat)
 - **微内核**: [Cordis Core](https://cordis.moe/)
+- **TypeSafe AI**: [TypeSafe AI 官方文档](https://docs.typesafe.ai/)
 
 ## 许可证
 

@@ -46,6 +46,7 @@ API contracts, SDK usage, models, limits, and worked examples.
 | Task | Start here; follow the relevant details |
 | --- | --- |
 | Understand the programming model | [System One](https://docs.typesafe.ai/concepts/system-one.md), [building guide](https://docs.typesafe.ai/concepts/how-to-build-with-system-one.md) |
+| Production Architecture & Steerable Reranking | [Jev System 1 Blueprint](../../../docs/resources/jev-system1-architecture.md) |
 | Explore what to build | [Use-case map](https://docs.typesafe.ai/concepts/use-case-map.md), then relevant cookbooks from the index |
 | Prepare inputs and questions | [State](https://docs.typesafe.ai/concepts/state.md), [primitives](https://docs.typesafe.ai/primitives.md), then the chosen primitive's page |
 | Decide how to handle uncertainty | [Confidence](https://docs.typesafe.ai/confidence.md) |
