@@ -17,8 +17,8 @@
     "build": "pnpm --dir engine/deepseek-harness run build",
     "test": "pnpm --dir engine/deepseek-harness run test",
     "test:imagine": "node --test src/tools/xai-imagine.test.js",
-    "test:jev": "node --test src/jev/router.test.js src/jev/steer.test.js src/jev/rerank.test.js",
-    "test:unit": "node --test src/jev/router.test.js src/jev/steer.test.js src/tools/xai-imagine.test.js src/jev/rerank.test.js",
+    "test:jev": "node --test src/jev/router.test.js src/jev/steer.test.js src/jev/rerank.test.js src/jev/cascade.test.js",
+    "test:unit": "node --test src/jev/router.test.js src/jev/steer.test.js src/tools/xai-imagine.test.js src/jev/rerank.test.js src/jev/cascade.test.js",
     "update-skills": "./bin/patze.js update-skills",
     "sync-skills": "./bin/patze.js update-skills"
   },

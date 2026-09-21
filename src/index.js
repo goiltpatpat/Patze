@@ -43,4 +43,6 @@ export function apply(ctx) {
 export { JevEngine, JevPlugin }
 export { routeTools, CORE_TOOLS, IMPLIES, PROB_KEEP } from './jev/router.js'
 export { rerankCandidates, verifyCitation, DEFAULT_POLICIES } from './jev/rerank.js'
+export { evaluateRequestGate, resolveClosedSetAction, handleProviderFailure, CLOSED_SET_ACTIONS } from './jev/cascade.js'
+
 

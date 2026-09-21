@@ -197,6 +197,34 @@ if (args[0] === 'verify-citation' && args[1] && args[2]) {
   process.exit(0)
 }
 
+if (args[0] === 'gate' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const result = await engine.evaluateRequestGate(args.slice(1).join(' '))
+  console.log('\x1b[35m%s\x1b[0m', '🚪 [Patze Jev Gate Evaluator] Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
+if (args[0] === 'dispatch' && args[1]) {
+  const { resolveClosedSetAction } = await import('../src/jev/cascade.js')
+  const result = resolveClosedSetAction(args.slice(1).join(' '))
+  console.log('\x1b[35m%s\x1b[0m', '🎯 [Patze Jev Closed-Set Dispatcher] Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
+if (args[0] === 'fallback-card' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const request = args[1]
+  const err = args.slice(2).join(' ') || 'Provider 503 Outage'
+  const result = await engine.handleProviderFailure(request, err)
+  console.log('\x1b[33m%s\x1b[0m', '🛡️ [Patze Jev Circuit Breaker Fallback Card] Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
 if (args[0] === 'stats' || args[0] === 'economy') {
   console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze Architecture] Token Efficiency & System 1 Engine Status:')
   console.log('  • DeepSeek Harness Spill Policy: Active (Spill threshold: 50,000 bytes to disk)')

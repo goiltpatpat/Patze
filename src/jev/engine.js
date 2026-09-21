@@ -8,6 +8,7 @@
  */
 
 import { rerankCandidates, verifyCitation } from './rerank.js'
+import { evaluateRequestGate, handleProviderFailure, resolveClosedSetAction } from './cascade.js'
 
 export class JevEngine {
   /**
@@ -665,5 +666,32 @@ export class JevEngine {
       claim,
       sourceText,
     })
+  }
+
+  /**
+   * Evaluate request action gate (acts_on_user_system vs prose_suffices).
+   * @param {string} request
+   * @returns {Promise<any>}
+   */
+  async evaluateRequestGate(request) {
+    return evaluateRequestGate({ engine: this, request })
+  }
+
+  /**
+   * Resolve closed-set action from natural language request without LLM.
+   * @param {string} request
+   */
+  resolveClosedSetAction(request) {
+    return resolveClosedSetAction(request)
+  }
+
+  /**
+   * Handle provider LLM failure via Jev System 1 Cascade fallback card.
+   * @param {string} request
+   * @param {Error | string} providerError
+   * @returns {Promise<any>}
+   */
+  async handleProviderFailure(request, providerError) {
+    return handleProviderFailure({ engine: this, request, providerError })
   }
 }
