@@ -2,210 +2,132 @@
 
 English | [中文](README.zh.md)
 
-**Patze** is an evidence-driven autonomous agent engineering platform engineered with a **Dual-Brain Cognitive Architecture (System 1 + System 2)**. It orchestrates the hot-reloadable micro-kernel of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (powered by [Cordis](https://github.com/cordiverse/cordis)), the sub-millisecond heuristic safety & routing engine of **Jev (TypeSafe AI)**, and the rigorous verification protocols of [Patpat](https://github.com/goiltpatpat/patpat).
+Patze is a local autonomous-agent engineering host. It runs [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) on [Cordis](https://github.com/cordiverse/cordis), loads [Patpat](https://github.com/goiltpatpat/patpat) skills from `.agents/skills`, and mounts a small System 1 layer (**Jev**) as a Cordis plugin.
 
-Documentation: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) · [Patpat Guide](plugins/patpat/docs/guide/README.md) · [DeepSeek Harness Docs](https://deepseek-harness.github.io/deepseek-harness/)
+The chat model (System 2) is whichever provider you configure. Jev does not replace it. Jev classifies intent, gates unsafe shell-like tool arguments, and scores proof text. Code owns the workflow.
 
----
+Docs: this README is current. [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) can lag. Also [Patpat guide](plugins/patpat/docs/guide/README.md) · [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/)
 
-## Architectural Principles
-
-Patze enforces production-grade software engineering discipline on autonomous AI systems:
-
-1. **Dual-Brain Cognitive Topology (System 1 + System 2)**:
-   - **System 1 (Jev Fast Heuristics & TypeSafe AI)**: Sub-millisecond deterministic intent routing, pattern-based safety guardrails (intercepting command pipelines, fork-bombs, destructive mutations, and credential exfiltration), and semantic proof evaluation. Powered by TypeSafe System One (`Choice`, `Score`, `Noul` primitives with Speculative Fan-out) when authenticated, with zero-latency local fallback.
-   - **System 2 (Deep Reasoning LLMs)**: Deep reasoning, architectural synthesis, state-machine generation, and hypothesis testing powered by DeepSeek-R1/V3, Claude, OpenAI, or OpenRouter.
-2. **Proof over Proxy (Patpat Evidence Protocol)**:
-   - Agents are forbidden from claiming task completion based on internal speculation or mock proxies. Every modification requires verified proof observed on the authoritative runtime surface (live HTTP response, exact compiler output, or test exit code), evaluated structurally and semantically.
-3. **Micro-Kernel Plugin Fabric (Cordis Engine)**:
-   - Spatiotemporally decoupled runtime. Tooling, model providers, execution sandboxes, and file watchers operate as hot-reloadable, isolated services registered via `ctx.provide()` and declarative YAML overlays.
-4. **Resilient Developer Experience**:
-   - Zero-friction auto-healing launcher (`./bin/patze.js`) that automatically initializes missing submodules and engine dependencies upon boot.
-
----
-
-## System Architecture
+## Layout
 
 ```text
-+-------------------------------------------------------------------------------+
-|                             Patze Runtime Layer                               |
-|   Web UI Console (Vite / Node :3080)       Headless CLI Runner (--profile)    |
-+-------------------------------------------------------------------------------+
-                                       │
-                                       ▼
-+-------------------------------------------------------------------------------+
-|                 System 1: Fast Heuristic & TypeSafe AI Engine (Jev)           |
-|   • Speculative Fan-Out Routing (<5ms)    • AgentShield Execution Guardrails  |
-|   • Choice, Score & Noul Primitives       • Semantic Proof Evaluation (TypeSafe)|
-+-------------------------------------------------------------------------------+
-                                       │
-                                       ▼
-+-------------------------------------------------------------------------------+
-|                         Cordis Micro-Kernel & Loader                          |
-|   • Service Registry (`ctx.provide`)      • Isolated Context Scopes           |
-|   • Dynamic Hot Reloading                 • config/cordis.yml Patch Overlay   |
-+-------------------------------------------------------------------------------+
-         │                                  │                                  │
-         ▼                                  ▼                                  ▼
-+--------------------+            +--------------------+            +--------------------+
-|  Model Connectors  |            | System 2 Reasoning |            | Execution Surfaces |
-| DeepSeek / OpenAI  | <========> | Patpat Loop (22)   | <========> | Sandboxed Bash     |
-| Claude / OpenRouter|            | Evidence Protocol  |            | Subagents / MCP    |
-+--------------------+            +--------------------+            +--------------------+
+Patze/
+├── bin/patze.js              # launcher (submodules, .env, Cordis overlay)
+├── config/cordis.yml         # inserts src/index.js into the engine
+├── src/
+│   ├── index.js              # Patze core: Jev + Imagine tools
+│   ├── jev/                  # System 1: route, safety, proof
+│   └── tools/xai-imagine.js  # grok-imagine-image-2.0 / grok-imagine-video-1.5
+├── .agents/skills/           # 22 Patpat skills
+├── plugins/patpat/           # upstream skill submodule
+└── engine/deepseek-harness/  # engine submodule
 ```
 
----
+Generated images and videos land in `artifacts/` (gitignored).
 
-## Patpat Engineering Skills Matrix
+## Runtime
 
-Patze bundles 22 specialized, evidence-driven engineering skills loaded directly into the AI context via `@deepseek-ai/dsh-skill-filesystem`:
+```text
+Web UI :3080  or  headless CLI
+        │
+        ▼
+Cordis  ←  config/cordis.yml  ←  patze-core (Jev + Imagine tools)
+        │
+        ├─ tools/pre-execute     Jev safety gate
+        ├─ tools/post-execute    Jev proof watcher
+        └─ agent/pre-step        Jev route once per turn (no media inject)
+```
 
-| Phase / Category | Skills | Functional Responsibility |
-|---|---|---|
-| **Core Engineering Loop** | `patpat`, `patpat-loop` | Standard disciplined cycle: `FRAME -> INSPECT -> PROOF CONTRACT -> ACT -> VERIFY -> REVIEW -> REPORT` |
-| **Architecture & Analysis** | `patpat-architect`, `patpat-plan`, `patpat-impact`, `patpat-inspect` | Pre-implementation contracts, multi-phase state machine design, non-destructive diagnosis, and blast-radius tracing |
-| **Bounded Implementation** | `patpat-change`, `patpat-engineer`, `patpat-debug` | Minimal diff mutations, bounded integration tasks, and reproducible root-cause defect elimination |
-| **Verification & Quality** | `patpat-verify`, `patpat-verifier`, `patpat-review`, `patpat-eval` | Authoritative surface observation, verifiable smoke generation, independent skeptical review, and skill evaluation |
-| **Delivery & Orchestration** | `patpat-ship`, `patpat-run`, `patpat-swarm`, `patpat-arena`, `patpat-perf` | Verified PR landing, resumable multi-stage state machines, parallel worker swarms, competing solution arenas, and numeric optimization |
-| **Platform & Metacognition**| `patpat-learn`, `patpat-skill`, `patpat-automation`, `patpat-setup` | Durable constraint capture, custom skill authoring, external automation scaffolding, and host verification |
+Jev is a background plugin, not a second chat agent. Media requests use the Imagine tools and the system prompt. Jev logs the route and does not re-inject mid-turn (that previously caused a second video job).
 
----
+Optional: set `TYPESAFE_API_KEY` to call TypeSafe System One (`Choice` / `Score` / `Noul`). Without it, Jev uses local heuristics.
 
 ## Quickstart
 
-### Prerequisites
-
-- **Node.js**: `^22.19 || >=24`
-- **pnpm**: `>=11.7.0`
-- **Git** & **Python**: `>=3.11`
-
-### 1. Clone & Bootstrap
+Requires Node.js `^22.19 || >=24`, pnpm `>=11.7.0`, Git, and Python `>=3.11`.
 
 ```sh
-# Clone repository with submodules
 git clone --recursive https://github.com/goiltpatpat/Patze.git
 cd Patze
-
-# Initialize submodules, install engine dependencies, and build
 pnpm setup
-```
-
-> **Smart Launcher:** The CLI binary `./bin/patze.js` automatically detects uninitialized submodules or missing dependencies and self-heals in-place.
-
-### 2. Configure Environment
-
-Copy the example environment file and insert your API credentials:
-
-```sh
 cp .env.example .env
 ```
 
-Key configuration variables:
+Fill `.env`. When that file exists, the launcher copies aliases (`GEMINI_API_KEY` ↔ `GOOGLE_API_KEY`, `KIMI_API_KEY` ↔ `MOONSHOT_API_KEY`, `TYPESAFE_API_KEY` ↔ `JEV_API_KEY`).
+
 ```dotenv
-# Primary System 2 Reasoning Model
-DEEPSEEK_API_KEY="your-deepseek-api-key"
-
-# System 1 Fast Decision & Verification (TypeSafe AI / Jev)
-TYPESAFE_API_KEY="your-typesafe-api-key" # Optional: unlocks TypeSafe System One cloud primitives
-
-# Optional alternative LLM providers:
-# OPENAI_API_KEY="your-openai-api-key"
-# ANTHROPIC_API_KEY="your-anthropic-api-key"
+DEEPSEEK_API_KEY=
+GEMINI_API_KEY=
+XAI_API_KEY=          # Imagine image/video
+MOONSHOT_API_KEY=
+TYPESAFE_API_KEY=     # optional System One
+PORT=3080
+HOST=127.0.0.1
 ```
-*(Alternatively, credentials can be configured interactively in the Web UI under **Settings > Providers**).*
 
-### 3. Launch Web UI Console
+Providers can also be set in the Web UI under **Settings > Providers**.
+
+### Web UI
 
 ```sh
 pnpm web
-# Or execute directly with launcher:
-./bin/patze.js web
+# or: ./bin/patze.js web --no-open
 ```
 
-* Navigate to `http://127.0.0.1:3080`
-* For headless remote servers, use `./bin/patze.js web --no-open`
+The process prints `dsh web: http://127.0.0.1:3080/?token=...`. Open that URL. A bare `http://127.0.0.1:3080` returns 401.
 
-### 4. Headless CLI Mode
-
-Run autonomous tasks directly from terminal or CI/CD pipelines:
+### Headless
 
 ```sh
 pnpm headless -- "Audit workspace dependencies and report security findings"
-# Or:
-./bin/patze.js --profile headless "Analyze repository architecture and report findings"
+./bin/patze.js --profile headless "Analyze repository architecture"
 ```
 
-### 5. Jev System 1 Decision CLI
-
-Utilize ultra-fast deterministic routing, hardened safety guardrails, and authoritative proof evaluation:
+### CLI helpers
 
 ```sh
-# Skill intent routing with speculative fan-out (<5ms fallback)
 ./bin/patze.js route "Fix memory leak in background worker queue"
-
-# AgentShield execution safety guardrail (pipeline unrolling, secret defense)
 ./bin/patze.js guard "rm -rf /var/log/*"
-
-# Authoritative proof contract evaluation (semantic & diagnostic verification)
-./bin/patze.js evaluate "✓ All 12 tests passed without error" "all unit tests pass"
+./bin/patze.js evaluate "All 12 tests passed" "all unit tests pass"
+./bin/patze.js imagine-video "A red balloon rising against a blue sky"
+./bin/patze.js imagine-image "A collie sitting in a sunlit field"
 ```
 
----
+`imagine-video` / `imagine-image` call xAI Imagine (`grok-imagine-video-1.5`, `grok-imagine-image-2.0`) and write under `artifacts/`. They need `XAI_API_KEY` and are billed by xAI.
 
-## Synchronization & Maintenance
+## Patpat skills
 
-### Keeping Patpat Skills Up-to-Date
+Loaded by `@deepseek-ai/dsh-skill-filesystem` from `.agents/skills`: 22 Patpat skills, plus `typesafe-ai`.
 
-Patze integrates Patpat as an active submodule tracking the upstream `main` branch. Synchronize all skills with a single command:
+| Area | Skills |
+|---|---|
+| Loop | `patpat`, `patpat-loop` |
+| Design | `patpat-architect`, `patpat-plan`, `patpat-impact`, `patpat-inspect` |
+| Change | `patpat-change`, `patpat-engineer`, `patpat-debug` |
+| Proof | `patpat-verify`, `patpat-verifier`, `patpat-review`, `patpat-eval` |
+| Ship | `patpat-ship`, `patpat-run`, `patpat-swarm`, `patpat-arena`, `patpat-perf` |
+| Platform | `patpat-learn`, `patpat-skill`, `patpat-automation`, `patpat-setup` |
+
+Loop: `FRAME -> INSPECT -> PROOF CONTRACT -> ACT -> VERIFY -> REVIEW -> REPORT`.
+
+## Maintenance
 
 ```sh
-pnpm update-skills
-```
-
-This updates `plugins/patpat` to the latest commit and synchronizes all skill bundles into `.agents/skills`. Automated daily sync is also maintained via [.github/workflows/sync-patpat.yml](.github/workflows/sync-patpat.yml).
-
-### Quality Verification
-
-```sh
-# Run engine test suite
-pnpm test
-
-# Rebuild engine packages
+pnpm update-skills   # plugins/patpat → .agents/skills
+pnpm test            # engine suite
+pnpm test:jev        # Jev steer policy
+pnpm test:imagine    # Imagine client (mocked fetch)
 pnpm build
 ```
 
----
+Daily skill sync: [.github/workflows/sync-patpat.yml](.github/workflows/sync-patpat.yml).
 
-## Production Deployment & Collaboration
+## Links
 
-Patze is ready for multi-user, team-based collaboration:
-
-### Option A: Cloud VPS with Reverse Proxy (Recommended for Teams)
-1. Run Patze via process manager:
-   ```sh
-   pm2 start ./bin/patze.js --name patze -- web --host 0.0.0.0 --port 3080 --no-open
-   ```
-2. Configure **Caddy** or **Nginx** reverse proxy to your custom domain (`https://patze.yourdomain.com`) with automated SSL.
-3. Access collaboratively using the session authentication token generated at startup.
-
-### Option B: Cloudflare Zero Trust Tunnel (Instant & Private)
-1. Run local tunnel without opening firewall ports:
-   ```sh
-   cloudflared tunnel --url http://localhost:3080
-   ```
-2. Route traffic securely through Cloudflare Access for your organization or team members.
-
----
-
-## Community & Ecosystem
-
-- **Main Repository**: [https://github.com/goiltpatpat/Patze](https://github.com/goiltpatpat/Patze)
-- **Issue Tracker**: [https://github.com/goiltpatpat/Patze/issues](https://github.com/goiltpatpat/Patze/issues)
-- **Upstream Engine**: [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
-- **Upstream Skills**: [Patpat](https://github.com/goiltpatpat/patpat)
-
----
+- [Patze](https://github.com/goiltpatpat/Patze) · [Issues](https://github.com/goiltpatpat/Patze/issues)
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+- [Patpat](https://github.com/goiltpatpat/patpat)
 
 ## License
 
-Released under the [MIT License](LICENSE).
+[MIT](LICENSE)

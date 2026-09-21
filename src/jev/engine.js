@@ -25,7 +25,44 @@ export class JevEngine {
    */
   async routeSkill(prompt) {
     const startTime = performance.now()
-    const lower = prompt.toLowerCase()
+    const trimmed = prompt.trim()
+    const lower = trimmed.toLowerCase()
+
+    // 0. Fast-path: Greetings and casual conversational messages MUST NOT be routed to engineering skills
+    const isGreetingOrCasual = /^(สวัสดี|หวัดดี|ดีครับ|ดีค่ะ|ฮัลโหล|ขอบคุณ|แต๊งกิ้ว|บาย|ลาก่อน|hello|hi|hey|greetings|howdy|good\s+(morning|afternoon|evening|night)|thanks|thank\s+you|bye|goodbye)(\s+(ครับ|ค่ะ|นะครับ|นะคะ|นะ|จ้า|เลย|ด้วย|ที|ครับผม|ค่ะคุณ|เพื่อน|bot|agent))*\s*$/i.test(lower)
+      || /^(สบายดีไหม|เป็นไงบ้าง|คุณคือใคร|คุณทำอะไรได้บ้าง|แนะนำตัว|who\s+are\s+you|what\s+can\s+you\s+do|how\s+are\s+you|test|testing)(\s+(ครับ|ค่ะ|นะครับ|นะคะ|ครับผม))*\s*$/i.test(lower)
+
+    if (isGreetingOrCasual) {
+      return {
+        skill: null,
+        confidence: 0,
+        intentCategory: 'conversational',
+        reasoning: 'Conversational greeting or casual query; no engineering workflow required',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    const isVideoGeneration = /(สร้างวิดีโอ|ทำวิดีโอ|เจนวิดีโอ|เจนคลิป|สร้างคลิป|ทำคลิป|\b(generate video|create video|imagine video|make a video|make video|text-to-video|image-to-video)\b)/i.test(lower)
+    if (isVideoGeneration) {
+      return {
+        skill: null,
+        confidence: 0.99,
+        intentCategory: 'video-generation',
+        reasoning: 'Video request: call xai_imagine_video (grok-imagine-video-1.5)',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
+
+    const isImageGeneration = /(สร้างรูป|วาดรูป|เจนภาพ|สร้างภาพ|ทำภาพ|วาดภาพ|\b(generate image|create image|imagine image|draw image|make an image)\b)/i.test(lower)
+    if (isImageGeneration) {
+      return {
+        skill: null,
+        confidence: 0.99,
+        intentCategory: 'image-generation',
+        reasoning: 'Image request: call xai_imagine_image (grok-imagine-image-2.0)',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
 
     // 1. If remote Jev / TypeSafe API key is configured, call official TypeSafe System One endpoint
     if (this.apiKey) {
@@ -119,27 +156,27 @@ export class JevEngine {
     }
 
     // 2. High-speed System 1 Heuristic Pattern Matcher covering all 22 Patpat skills
-    let selectedSkill = 'patpat-loop'
-    let confidence = 0.85
-    let category = 'general-engineering'
-    let reasoning = 'Default evidence-driven loop'
+    let selectedSkill = null
+    let confidence = 0.0
+    let category = 'conversational'
+    let reasoning = 'No engineering intent pattern matched'
 
-    if (/\b(debug|fix|bug|error|exception|crash|fail|traceback|defect|issue|broken|failing test)\b/i.test(lower)) {
+    if (/(แก้บั๊ก|บั๊ก|ข้อผิดพลาด|พัง|หลุด|\b(debug|fix|bug|error|exception|crash|fail|traceback|defect|issue|broken|failing test)\b)/i.test(lower)) {
       selectedSkill = 'patpat-debug'
       confidence = 0.96
       category = 'diagnostics'
       reasoning = 'Detected defect diagnosis or error fixing intent'
-    } else if (/\b(architect|system design|data model|public contract|boundary|schema migration|architecture)\b/i.test(lower)) {
+    } else if (/(ออกแบบระบบ|สถาปัตยกรรม|โครงสร้างระบบ|\b(architect|system design|data model|public contract|boundary|schema migration|architecture)\b)/i.test(lower)) {
       selectedSkill = 'patpat-architect'
       confidence = 0.95
       category = 'architecture'
       reasoning = 'Detected architectural, schema migration, or public contract design intent'
-    } else if (/\b(review|audit|challenge|inspect-diff|critique|sanity check|skeptical)\b/i.test(lower)) {
+    } else if (/(รีวิวโค้ด|ตรวจโค้ด|ตรวจทาน|\b(review|audit|challenge|inspect-diff|critique|sanity check|skeptical)\b)/i.test(lower)) {
       selectedSkill = 'patpat-review'
       confidence = 0.95
       category = 'review'
       reasoning = 'Detected independent skeptical review or verification challenge intent'
-    } else if (/\b(ship|land|merge|publish|deploy|open pr|create pr|pull request|release)\b/i.test(lower)) {
+    } else if (/(ปล่อยระบบ|ขึ้นโปรดักชั่น|ขึ้น prod|merge pr|\b(ship|land|merge|publish|deploy|open pr|create pr|pull request|release)\b)/i.test(lower)) {
       selectedSkill = 'patpat-ship'
       confidence = 0.97
       category = 'delivery'
@@ -224,9 +261,24 @@ export class JevEngine {
       confidence = 0.91
       category = 'implementation'
       reasoning = 'Detected bounded feature implementation intent'
+    } else if (/\b(loop|patpat|work on|improve|develop|build|execute|ดำเนินการ|เริ่มงาน|โปรเจกต์|พัฒนา)\b/i.test(lower)) {
+      selectedSkill = 'patpat-loop'
+      confidence = 0.91
+      category = 'general-engineering'
+      reasoning = 'Detected general engineering workflow intent'
     }
 
     const latencyMs = Math.round(performance.now() - startTime)
+    if (!selectedSkill) {
+      return {
+        skill: null,
+        confidence: 0.1,
+        intentCategory: 'conversational',
+        reasoning: 'No explicit engineering skill matched',
+        latencyMs,
+      }
+    }
+
     return {
       skill: selectedSkill,
       confidence,

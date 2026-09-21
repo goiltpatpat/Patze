@@ -15,9 +15,13 @@ dist-exe/
 # Runtime state
 .sessions/
 .storages/
-.artifacts/
 .dsh-build/
 tmp/
+
+# Generated media and local run products (never commit)
+.artifacts/
+artifacts/
+**/artifacts/
 
 # Sub-engines and build outputs
 engine/deepseek-harness/node_modules/
