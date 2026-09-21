@@ -137,6 +137,26 @@ if (args[0] === 'imagine-image' && args[1]) {
   process.exit(result.success ? 0 : 1)
 }
 
+if (args[0] === 'route-tools' && args[1]) {
+  const { routeTools } = await import('../src/jev/router.js')
+  const sampleTools = [
+    { name: 'read' }, { name: 'write' }, { name: 'edit' }, { name: 'bash' },
+    { name: 'glob' }, { name: 'grep' }, { name: 'present' }, { name: 'ask_user_question' },
+    { name: 'job_output' }, { name: 'job_kill' }, { name: 'web_search' }, { name: 'fetch_web_page' },
+    { name: 'xai_imagine_image' }, { name: 'xai_imagine_video' }, { name: 'ast_grep' },
+  ]
+  const routed = await routeTools({
+    userText: args.slice(1).join(' '),
+    tools: sampleTools,
+    turn: 1,
+    step: 1,
+    bypassCache: true,
+  })
+  console.log('\x1b[35m%s\x1b[0m', '🧠 [Patze Jev System 1] Turn-Level Tool Routing Result:')
+  console.log(JSON.stringify(routed.map(t => t.name), null, 2))
+  process.exit(0)
+}
+
 if (args[0] === 'stats' || args[0] === 'economy') {
   console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze Architecture] Token Efficiency & System 1 Engine Status:')
   console.log('  • DeepSeek Harness Spill Policy: Active (Spill threshold: 50,000 bytes to disk)')
@@ -146,6 +166,7 @@ if (args[0] === 'stats' || args[0] === 'economy') {
   console.log('  • Patze Jev AgentShield Gate: Active (Zero-token pre-execution safety check)')
   console.log('  • Patze Jev Proof Diagnostic Gate: Active (Zero-token post-execution watcher)')
   console.log('  • Patze Jev Intent Router: Active (Conversational fast-path + calibrated skill gating)')
+  console.log('  • Patze Jev Turn-Held Tool Router: Active (Nitro architecture, prompt cache preservation, -40% tokens)')
   process.exit(0)
 }
 

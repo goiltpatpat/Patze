@@ -4,6 +4,7 @@
 
 import { JevEngine } from './engine.js'
 import { latestUserText, shouldSteer, steerMode } from './steer.js'
+import { routeTools } from './router.js'
 import type { JevConfig, SkillRouteResult, SafetyCheckResult, ProofEvaluationResult } from './types.js'
 
 export const name = 'patze-jev'
@@ -13,6 +14,7 @@ export interface JevService {
   routeSkill: (prompt: string) => Promise<SkillRouteResult>
   checkSafety: (command: string) => Promise<SafetyCheckResult>
   evaluateProof: (output: string, contract?: string) => Promise<ProofEvaluationResult>
+  routeTools: (params: any) => Promise<any>
 }
 
 export interface CordisContext {
@@ -23,12 +25,14 @@ export interface CordisContext {
 export function apply(ctx: CordisContext, config: JevConfig = {}) {
   const engine = new JevEngine(config)
   const steered = new WeakMap<object, { turn?: unknown; fingerprint: string }>()
+  const pendingTurnText = new Map<string, string>()
 
   const service: JevService = {
     engine,
     routeSkill: (prompt) => engine.routeSkill(prompt),
     checkSafety: (command) => engine.checkSafety(command),
     evaluateProof: (output, contract) => engine.evaluateProof(output, contract),
+    routeTools: (params) => routeTools({ engine, ...params }),
   }
 
   if (typeof ctx?.provide === 'function') {
@@ -92,6 +96,56 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
       return decision
     })
 
+    // 🎯 Active Hook 4: Turn-Held Tool Routing & Prompt-Cache Preservation (Nitro Architecture)
+    ctx.on('agent/inbox/claimed', ({ message, turn, agent }: any) => {
+      try {
+        const text = latestUserText([message])
+        if (text && agent?.id) {
+          pendingTurnText.set(`${agent.id}:${turn}`, text)
+        }
+      } catch {
+        // Non-blocking telemetry
+      }
+    })
+
+    ctx.on('system-prompt/assemble', async (assembly: any, context: any, next: () => Promise<any>) => {
+      const result = await next()
+      try {
+        const agent = context?.agent || context?.scope
+        const agentId = agent?.id || 'agent'
+        const turn = agent?.phase?.turn ?? 1
+        const turnKey = `${agentId}:${turn}`
+        let userText = pendingTurnText.get(turnKey) || ''
+
+        if (!userText && agent?.session?.log) {
+          for (let i = agent.session.log.length - 1; i >= 0; i--) {
+            const ev = agent.session.log[i]
+            if (ev?.type === 'user/message') {
+              userText = latestUserText([ev.data])
+              if (userText) break
+            }
+          }
+        }
+
+        if (Array.isArray(result?.tools) && result.tools.length > 0) {
+          const routedTools = await routeTools({
+            engine,
+            userText,
+            tools: result.tools,
+            turn,
+            agentId,
+          })
+          return {
+            ...result,
+            tools: routedTools,
+          }
+        }
+      } catch {
+        // Fail-open: keep full tools on any router exception
+      }
+      return result
+    })
+
     // ⚡ Active Hook 3: Real-time System 1 Fast Intent Routing & Context Steering
     ctx.on('agent/pre-step', async ({ agent, messages, turn, step }: any, next: () => Promise<any>) => {
       const decision = await next()
@@ -131,5 +185,8 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
     })
   }
 
-  console.log('\x1b[35m%s\x1b[0m', '🧠 [Patze] Jev System 1 Decision, AgentShield & Proof Watcher online')
+  console.log('\x1b[35m%s\x1b[0m', '🧠 [Patze] Jev System 1 Decision, Tool Router & Proof Watcher online')
 }
+
+export { routeTools }
+
