@@ -2,7 +2,7 @@
 import { spawn, execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(__dirname, '..')
@@ -183,6 +183,25 @@ for (let i = 0; i < args.length; i++) {
     profile = args[++i]
   } else {
     remainingArgs.push(arg)
+  }
+}
+
+// Token Economy & Profile Hygiene: ensure clean web bundle profile unless --team is explicitly requested
+const homeDir = process.env.HOME || process.env.USERPROFILE || ''
+const webProfilePkg = resolve(homeDir, '.dsh/profiles/web/package.json')
+if (profile === 'web' && !remainingArgs.includes('--team') && existsSync(webProfilePkg)) {
+  try {
+    const pkgData = JSON.parse(readFileSync(webProfilePkg, 'utf-8'))
+    const bundles = pkgData?.dsh?.profile?.bundles
+    if (Array.isArray(bundles)) {
+      const cleanBundles = bundles.filter(b => !b.includes('experimental-agent-team'))
+      if (cleanBundles.length !== bundles.length) {
+        pkgData.dsh.profile.bundles = cleanBundles
+        writeFileSync(webProfilePkg, JSON.stringify(pkgData, null, 2) + '\n')
+      }
+    }
+  } catch {
+    // Non-blocking
   }
 }
 
