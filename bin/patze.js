@@ -157,6 +157,46 @@ if (args[0] === 'route-tools' && args[1]) {
   process.exit(0)
 }
 
+if (args[0] === 'rerank' && args[1]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const query = args[1]
+  let candidates = []
+  let policy = 'authoritative'
+  let topK
+
+  for (let i = 2; i < args.length; i++) {
+    if (args[i] === '--policy' && args[i + 1]) {
+      policy = args[++i]
+    } else if (args[i] === '--top' && args[i + 1]) {
+      topK = parseInt(args[++i], 10)
+    } else if (!candidates.length) {
+      try {
+        candidates = JSON.parse(args[i])
+      } catch {
+        candidates = [{ id: '1', text: args.slice(i).join(' ') }]
+        break
+      }
+    }
+  }
+
+  const result = await engine.rerankCandidates(query, candidates, { policy, topK })
+  console.log('\x1b[35m%s\x1b[0m', '🎯 [Patze Jev Steerable Reranker] Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
+if (args[0] === 'verify-citation' && args[1] && args[2]) {
+  const { JevEngine } = await import('../src/jev/engine.js')
+  const engine = new JevEngine()
+  const claim = args[1]
+  const sourceText = args.slice(2).join(' ')
+  const result = await engine.verifyCitation(claim, sourceText)
+  console.log('\x1b[35m%s\x1b[0m', '🔍 [Patze Jev Citation Verification] Result:')
+  console.log(JSON.stringify(result, null, 2))
+  process.exit(0)
+}
+
 if (args[0] === 'stats' || args[0] === 'economy') {
   console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze Architecture] Token Efficiency & System 1 Engine Status:')
   console.log('  • DeepSeek Harness Spill Policy: Active (Spill threshold: 50,000 bytes to disk)')
@@ -167,6 +207,8 @@ if (args[0] === 'stats' || args[0] === 'economy') {
   console.log('  • Patze Jev Proof Diagnostic Gate: Active (Zero-token post-execution watcher)')
   console.log('  • Patze Jev Intent Router: Active (Conversational fast-path + calibrated skill gating)')
   console.log('  • Patze Jev Turn-Held Tool Router: Active (Nitro architecture, prompt cache preservation, -40% tokens)')
+  console.log('  • Patze Jev Steerable Reranker: Active (64-concurrency policy-driven chunk scoring)')
+  console.log('  • Patze Jev Citation Stance Verifier: Active (supports / contradicts / unaddressed)')
   process.exit(0)
 }
 

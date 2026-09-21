@@ -48,3 +48,5 @@ export function apply(ctx: any) {
 export * from './jev/types.js'
 export { JevEngine, JevPlugin }
 export { routeTools, CORE_TOOLS, IMPLIES, PROB_KEEP } from './jev/router.js'
+export { rerankCandidates, verifyCitation, DEFAULT_POLICIES } from './jev/rerank.js'
+

@@ -7,6 +7,8 @@
  * 3. High-Precision Proof Contract & Test Suite Evaluator
  */
 
+import { rerankCandidates, verifyCitation } from './rerank.js'
+
 export class JevEngine {
   /**
    * @param {import('./types.js').JevConfig} [config]
@@ -632,5 +634,36 @@ export class JevEngine {
     } finally {
       clearTimeout(timeout)
     }
+  }
+
+  /**
+   * Steerable Reranker: Reranks candidate passages against user query and executable policy criteria.
+   * @param {string} query
+   * @param {import('./types.js').RerankCandidate[]} candidates
+   * @param {object} [options]
+   * @returns {Promise<import('./types.js').RerankResult>}
+   */
+  async rerankCandidates(query, candidates, options = {}) {
+    return rerankCandidates({
+      engine: this,
+      query,
+      candidates,
+      ...options,
+    })
+  }
+
+  /**
+   * Citation Stance Verification: Verifies whether a cited passage supports, contradicts,
+   * or fails to address a statement or claim.
+   * @param {string} claim
+   * @param {string} sourceText
+   * @returns {Promise<import('./types.js').CitationCheckResult>}
+   */
+  async verifyCitation(claim, sourceText) {
+    return verifyCitation({
+      engine: this,
+      claim,
+      sourceText,
+    })
   }
 }

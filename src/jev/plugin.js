@@ -11,6 +11,7 @@
 import { JevEngine } from './engine.js'
 import { latestUserText, shouldSteer, steerMode } from './steer.js'
 import { routeTools } from './router.js'
+import { rerankCandidates, verifyCitation, DEFAULT_POLICIES } from './rerank.js'
 
 export const name = 'patze-jev'
 
@@ -25,6 +26,8 @@ export function apply(ctx, config = {}) {
     checkSafety: (command) => engine.checkSafety(command),
     evaluateProof: (output, contract) => engine.evaluateProof(output, contract),
     routeTools: (params) => routeTools({ engine, ...params }),
+    rerankCandidates: (query, candidates, options) => engine.rerankCandidates(query, candidates, options),
+    verifyCitation: (claim, sourceText) => engine.verifyCitation(claim, sourceText),
   }
 
   if (typeof ctx?.provide === 'function') {
@@ -180,4 +183,6 @@ export function apply(ctx, config = {}) {
 }
 
 export { routeTools }
+export { rerankCandidates, verifyCitation, DEFAULT_POLICIES }
+
 

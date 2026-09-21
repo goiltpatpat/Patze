@@ -37,6 +37,39 @@ export interface ProofEvaluationResult {
   latencyMs: number
 }
 
+export interface RerankCandidate {
+  id: string | number
+  text: string
+  source?: string
+  version?: string
+  metadata?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface ScoredCandidate extends RerankCandidate {
+  score: number // calibrated probability 0.0 to 1.0
+  rank: number
+}
+
+export interface RerankResult {
+  query: string
+  policy: string
+  ranked: ScoredCandidate[]
+  topCandidate: ScoredCandidate | null
+  latencyMs: number
+}
+
+export interface CitationCheckResult {
+  stance: 'supports' | 'contradicts' | 'unaddressed'
+  confidence: number
+  probabilities: {
+    supports: number
+    contradicts: number
+    unaddressed: number
+  }
+  latencyMs: number
+}
+
 export interface JevConfig {
   apiKey?: string
   baseUrl?: string
@@ -44,3 +77,4 @@ export interface JevConfig {
   fallbackToHeuristics?: boolean
   timeoutMs?: number
 }
+

@@ -5,7 +5,16 @@
 import { JevEngine } from './engine.js'
 import { latestUserText, shouldSteer, steerMode } from './steer.js'
 import { routeTools } from './router.js'
-import type { JevConfig, SkillRouteResult, SafetyCheckResult, ProofEvaluationResult } from './types.js'
+import { rerankCandidates, verifyCitation, DEFAULT_POLICIES } from './rerank.js'
+import type {
+  JevConfig,
+  SkillRouteResult,
+  SafetyCheckResult,
+  ProofEvaluationResult,
+  RerankCandidate,
+  RerankResult,
+  CitationCheckResult,
+} from './types.js'
 
 export const name = 'patze-jev'
 
@@ -15,6 +24,8 @@ export interface JevService {
   checkSafety: (command: string) => Promise<SafetyCheckResult>
   evaluateProof: (output: string, contract?: string) => Promise<ProofEvaluationResult>
   routeTools: (params: any) => Promise<any>
+  rerankCandidates: (query: string, candidates: RerankCandidate[], options?: any) => Promise<RerankResult>
+  verifyCitation: (claim: string, sourceText: string) => Promise<CitationCheckResult>
 }
 
 export interface CordisContext {
@@ -33,6 +44,8 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
     checkSafety: (command) => engine.checkSafety(command),
     evaluateProof: (output, contract) => engine.evaluateProof(output, contract),
     routeTools: (params) => routeTools({ engine, ...params }),
+    rerankCandidates: (query, candidates, options) => engine.rerankCandidates(query, candidates, options),
+    verifyCitation: (claim, sourceText) => engine.verifyCitation(claim, sourceText),
   }
 
   if (typeof ctx?.provide === 'function') {
@@ -189,4 +202,6 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
 }
 
 export { routeTools }
+export { rerankCandidates, verifyCitation, DEFAULT_POLICIES }
+
 
