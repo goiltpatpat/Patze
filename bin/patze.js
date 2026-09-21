@@ -59,6 +59,25 @@ if (existsSync(rootEnv)) {
   } catch (err) {
     console.warn('\x1b[33m%s\x1b[0m', `⚠️ [Patze] Warning reading .env: ${err instanceof Error ? err.message : String(err)}`)
   }
+
+  // Smart Provider Alias Normalization (Gemini, Kimi/Moonshot, TypeSafe/Jev)
+  if (process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    process.env.GOOGLE_API_KEY = process.env.GEMINI_API_KEY
+  } else if (process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
+    process.env.GEMINI_API_KEY = process.env.GOOGLE_API_KEY
+  }
+
+  if (process.env.KIMI_API_KEY && !process.env.MOONSHOT_API_KEY) {
+    process.env.MOONSHOT_API_KEY = process.env.KIMI_API_KEY
+  } else if (process.env.MOONSHOT_API_KEY && !process.env.KIMI_API_KEY) {
+    process.env.KIMI_API_KEY = process.env.MOONSHOT_API_KEY
+  }
+
+  if (process.env.TYPESAFE_API_KEY && !process.env.JEV_API_KEY) {
+    process.env.JEV_API_KEY = process.env.TYPESAFE_API_KEY
+  } else if (process.env.JEV_API_KEY && !process.env.TYPESAFE_API_KEY) {
+    process.env.TYPESAFE_API_KEY = process.env.JEV_API_KEY
+  }
 }
 
 // Ensure Skill Discovery searches Patze's root .agents/skills directory
