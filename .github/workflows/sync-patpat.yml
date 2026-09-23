@@ -1,4 +1,4 @@
-name: Auto-Sync Patpat Skills
+name: Check Patpat Skills
 
 on:
   schedule:
@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  sync-skills:
-    name: Sync Patpat Submodule & Skills
+  check-skills:
+    name: Check pinned Patpat skills and upstream
     runs-on: ubuntu-latest
 
     steps:
@@ -24,28 +24,16 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Verify pinned portable skills
+        run: python3 scripts/verify_patpat_skills.py
 
-      - name: Configure Git
+      - name: Check upstream Patpat revision
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Update Patpat Submodule & Sync Skills
-        run: |
+          pinned="$(git rev-parse HEAD:plugins/patpat)"
           git submodule update --remote plugins/patpat
-          python3 -c "import shutil; from pathlib import Path; src=Path('plugins/patpat/skills'); dst=Path('.agents/skills'); [shutil.copytree(s, dst/s.name, dirs_exist_ok=True) for s in src.iterdir() if s.is_dir() and (s/'SKILL.md').is_file()]; print('Synced skills successfully.')"
-
-      - name: Commit and Push if Changed
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git add plugins/patpat .agents/skills
-            git commit -m "chore(skills): auto-sync patpat skills from upstream [skip ci]"
-            git push origin main
-            echo "Successfully pushed updated skills to main."
-          else
-            echo "No changes detected. Patpat skills are already up to date."
+          upstream="$(git -C plugins/patpat rev-parse HEAD)"
+          if [ "$pinned" != "$upstream" ]; then
+            echo "::error::Patpat upstream advanced from $pinned to $upstream. Run pnpm update-skills and submit the reviewed change through a PR."
+            exit 1
           fi
+          echo "Patpat upstream matches the pinned revision."
