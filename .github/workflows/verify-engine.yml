@@ -1,0 +1,63 @@
+name: Verify Patze engine
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify engine source and pin
+        run: |
+          test "$(git config -f .gitmodules --get submodule.engine/deepseek-harness.url)" = "https://github.com/deepseek-ai/deepseek-harness.git"
+          git submodule update --init engine/deepseek-harness
+          test "$(git -C engine/deepseek-harness rev-parse HEAD)" = "$(git rev-parse HEAD:engine/deepseek-harness)"
+          git -C engine/deepseek-harness fetch --tags --quiet origin
+          git -C engine/deepseek-harness describe --exact-match --tags --match 'dsh-v*' HEAD
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+          cache-dependency-path: engine/deepseek-harness/pnpm-lock.yaml
+
+      - name: Install pinned engine dependencies
+        run: pnpm --dir engine/deepseek-harness install --frozen-lockfile
+
+      - name: Test Patze
+        run: pnpm test:unit
+
+      - name: Test Harness skill discovery
+        run: pnpm --dir engine/deepseek-harness exec vitest run packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts
+
+      - name: Build pinned engine
+        run: pnpm build
+
+      - name: Check Patze profile overlay
+        env:
+          DSH_HOME: ${{ runner.temp }}/patze-dsh-home
+          DSH_AGENTS_HOME: ${{ github.workspace }}/.agents
+        run: |
+          pnpm --dir engine/deepseek-harness dsh --profile web --patch "$GITHUB_WORKSPACE/config/cordis.yml" --dump-config > "$RUNNER_TEMP/patze-config.yml"
+          grep -Fq 'patze-core' "$RUNNER_TEMP/patze-config.yml"
+          grep -Fq 'src/index.js' "$RUNNER_TEMP/patze-config.yml"
+          grep -Fq 'skill-filesystem' "$RUNNER_TEMP/patze-config.yml"
+
+      - name: Smoke Patze Web runtime
+        run: python3 scripts/verify_engine_smoke.py

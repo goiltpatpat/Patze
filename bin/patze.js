@@ -29,12 +29,12 @@ const engineNodeModules = resolve(engineDir, 'node_modules')
 if (!existsSync(engineNodeModules)) {
   console.log('\x1b[36m%s\x1b[0m', '📦 [Patze] Engine dependencies not found. Installing via pnpm...')
   try {
-    execSync('pnpm install', {
+    execSync('pnpm install --frozen-lockfile', {
       cwd: engineDir,
       stdio: 'inherit',
     })
   } catch {
-    console.error('\x1b[31m%s\x1b[0m', '❌ [Patze] Failed to install dependencies. Please run: pnpm --dir engine/deepseek-harness install')
+    console.error('\x1b[31m%s\x1b[0m', '❌ [Patze] Failed to install dependencies. Please run: pnpm --dir engine/deepseek-harness install --frozen-lockfile')
     process.exit(1)
   }
 }
