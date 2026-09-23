@@ -6,8 +6,6 @@
   disabled: false
   config:
     watch: false
-    customSkillDirs:
-      - ../.agents/skills
 
 - id: ui-sidebar-browser
   disabled: false

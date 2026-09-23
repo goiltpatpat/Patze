@@ -89,7 +89,7 @@ Patze/
 │       └── xai-imagine.test.js # Unit test suite (11/11 passing tests)
 ├── .agents/skills/           # 22 active Patpat engineering workflows + typesafe-ai
 ├── plugins/patpat/           # Upstream Patpat submodule
-├── engine/deepseek-harness/  # DeepSeek Harness submodule (v0.1.6-alpha.2)
+├── engine/deepseek-harness/  # DeepSeek Harness submodule (v0.1.7-rc.1)
 └── artifacts/                # Local generated media outputs (images/videos, gitignored)
 ```
 
