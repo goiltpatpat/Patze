@@ -16,7 +16,10 @@ const directory = join(home, 'profiles', name)
 if (existsSync(directory)) throw new Error(`Profile already exists: ${directory}`)
 if (!existsSync(join(engine, 'node_modules'))) throw new Error('Run pnpm setup before initializing models')
 
-const result = spawnSync('pnpm', ['dsh', '--profile', name, '--from-default-profile', 'web', '--dump-config'], {
+const result = spawnSync(process.execPath, [
+  '--import', 'tsx/esm', 'apps/cli/src/bin.ts',
+  '--profile', name, '--from-default-profile', 'web', '--dump-config',
+], {
   cwd: engine,
   env: { ...process.env, DSH_HOME: home },
   encoding: 'utf8',
