@@ -299,7 +299,23 @@ export class JevEngine {
    */
   async checkSafety(command) {
     const startTime = performance.now()
-    const trimmed = command.trim()
+    const trimmed = (command || '').trim()
+
+    // 0. Whole-command global checks (fork bomb, obfuscated execution, pipe-to-shell)
+    if (
+      /:\(\)\s*\{\s*:\|:&\s*\};:/i.test(trimmed) ||
+      /(curl|wget)\s+.*\|\s*(ba|z)?sh\b/i.test(trimmed) ||
+      /(curl|wget)\s+.*\|\s*python\b/i.test(trimmed) ||
+      /base64\s+(-d|--decode)\s*\|\s*(ba|z)?sh\b/i.test(trimmed)
+    ) {
+      return {
+        safe: false,
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        reason: 'Untrusted pipe-to-shell or obfuscated execution pattern detected',
+        latencyMs: Math.round(performance.now() - startTime),
+      }
+    }
 
     // 1. Split compound command pipelines (;, &&, ||, |, &, newlines)
     const rawSegments = trimmed.split(/(?:;|&&|\|\||&|\n)/).map(s => s.trim()).filter(Boolean)
@@ -360,9 +376,10 @@ export class JevEngine {
       }
     }
 
-    // Privileged system path mutation
+    // Privileged system path mutation & raw block device overwrite
     if (
-      /(>\s*|tee\s+(-\w+\s+)?)\/(etc\/(passwd|shadow|sudoers)|boot|sys|proc)/i.test(trimmed) ||
+      /(>\s*|tee\s+(-\w+\s+)?)\/(etc\/(passwd|shadow|sudoers)|boot|sys|proc|dev\/(sd[a-z]|nvme|hd[a-z]|loop))/i.test(trimmed) ||
+      /\bdd\s+.*of=\/dev\/(sd[a-z]|nvme|hd[a-z]|loop)/i.test(trimmed) ||
       /\bchmod\s+[0-7]{3,4}\s+\/etc\/(passwd|shadow|sudoers)\b/i.test(trimmed)
     ) {
       return {
@@ -416,7 +433,14 @@ export class JevEngine {
       const hasRecursive = tokens.some(t => t === '-r' || t === '-R' || (t.startsWith('-') && t.includes('r')))
       const hasForce = tokens.some(t => t === '-f' || (t.startsWith('-') && t.includes('f')))
       const targets = tokens.filter(t => !t.startsWith('-'))
-      const dangerousTargets = targets.some(t => t === '/' || t === '/*' || t.startsWith('/etc') || t.startsWith('/var') || t === '~' || t === '~/' || t === '*' || t === './*' || t === '.')
+      const dangerousTargets = targets.some(t =>
+        t === '/' || t === '/*' ||
+        t.startsWith('/etc') || t.startsWith('/var') || t.startsWith('/usr') ||
+        t.startsWith('/bin') || t.startsWith('/boot') || t.startsWith('/sys') ||
+        t.startsWith('/proc') || t.startsWith('/dev') || t.startsWith('/lib') ||
+        t.startsWith('/opt') || t === '~' || t === '~/' || t === '*' ||
+        t === './*' || t === '.'
+      )
 
       if (hasRecursive && hasForce && dangerousTargets) {
         return {
@@ -535,8 +559,14 @@ export class JevEngine {
     for (const clause of contractClauses) {
       const lowerClause = clause.toLowerCase()
 
-      // Check negation clauses (e.g. "without error", "0 failures", "no regressions")
-      if (lowerClause.includes('without error') || lowerClause.includes('0 failure') || lowerClause.includes('no error')) {
+      // Check negation clauses (e.g. "without error", "0 failures", "no regressions", "clean test run")
+      if (
+        lowerClause.includes('without error') ||
+        lowerClause.includes('0 failure') ||
+        lowerClause.includes('no error') ||
+        (lowerClause.includes('clean') && (hasZeroFailures || lowerOutput.includes('passed') || !hasActiveFailures)) ||
+        (lowerClause.includes('test') && (hasZeroFailures || lowerOutput.includes('passed')))
+      ) {
         if (!hasActiveFailures && (hasZeroFailures || lowerOutput.includes('success') || lowerOutput.includes('passed') || exitCode === 0)) {
           passed.push(clause)
         } else {

@@ -24,6 +24,17 @@ function mountImaginePrompt(target) {
 
 export function apply(ctx) {
   console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze] Initialized Patze Autonomous Agent Platform')
+
+  // Infallible Safeguard: Ensure TOOL_RUNTIME_SCHEDULER symbol interoperability
+  if (ctx.tools) {
+    const symFor = Symbol.for('@deepseek-ai/dsh-tools.scheduler')
+    const symbols = Object.getOwnPropertySymbols(ctx.tools)
+    const schedulerSym = symbols.find(s => String(s).includes('scheduler'))
+    if (schedulerSym && ctx.tools[schedulerSym]) {
+      ctx.tools[symFor] ??= ctx.tools[schedulerSym]
+    }
+  }
+
   JevPlugin.apply(ctx)
 
   const registered = registerImagineTools(ctx)
