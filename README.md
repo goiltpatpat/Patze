@@ -136,6 +136,10 @@ HOST=127.0.0.1
 
 *(Credentials can also be modified live inside the Web UI under **Settings > Providers**).*
 
+### Optional curated Kimi and OpenAI profile
+
+To create a separate Web profile with Kimi 2.6 and newer and GPT-6 Astra, Sol, and Luna, run `pnpm models:init` once, then start it with `./bin/patze.js --profile patze-curated --no-open`. This creates `$DSH_HOME/profiles/patze-curated` (or `~/.dsh/profiles/patze-curated`) and refuses to overwrite an existing profile. The existing `web` profile and provider settings are unchanged. Set `MOONSHOT_API_KEY` and/or `OPENAI_API_KEY` in the root `.env` or environment before using those providers. Model access depends on the API key's provider entitlement; the catalog does not test a live request. Sol and Luna are not yet in the pinned pi-ai catalog, so its cost estimate for those two models is zero until upstream supplies pricing. A home-level `$DSH_HOME/cordis.patch.yml` applies after this profile and can override its models.
+
 ---
 
 ## Execution Modes

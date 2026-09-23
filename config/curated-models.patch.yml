@@ -1,0 +1,38 @@
+# Opt-in model catalog for a separate Patze Web profile.
+- id: llm-pi-ai
+  config:
+    providers:
+      moonshotai:
+        apiKeyEnv: MOONSHOT_API_KEY
+        models:
+          - id: kimi-k2.6
+          - id: kimi-k2.7-code
+          - id: kimi-k2.7-code-highspeed
+          - id: kimi-k3
+      openai:
+        apiKeyEnv: OPENAI_API_KEY
+        api: openai-responses
+        defaultContextWindow: 1050000
+        defaultMaxTokens: 128000
+        defaultInput: [text, image]
+        models:
+          - id: gpt-6-astra
+            contextWindow: 1050000
+          - id: gpt-6-sol
+            name: GPT-6 Sol
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
+          - id: gpt-6-luna
+            name: GPT-6 Luna
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+              xhigh: xhigh
+              max: max
