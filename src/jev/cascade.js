@@ -103,22 +103,34 @@ export async function evaluateRequestGate({ engine, request }) {
     }
   }
 
-  // Deterministic Gate Heuristic
+  // Deterministic Gate Heuristic: Negative & Explanation Intent Boundaries
+  const negativeRegex = /(อย่า|ห้าม|ไม่ต้อง|ไม่ให้|ระวังอย่า|\b(don'?t|do not|never|stop|skip|without\s+(executing|running)|no\s+(exec|execution))\b)/i
+  const explanationRegex = /(วิธี|อธิบาย|สอน|แนวทาง|คำสั่ง.*คืออะไร|\b(how\s+to|how\s+do|how\s+can|explain|show\s+me\s+how|what\s+is\s+the\s+command|tell\s+me\s+how|tutorial|guide)\b)/i
   const actionRegex = /(รัน|สร้าง|ทำ|บิลด์|แก้|เช็ค|เทส|ทดสอบ|ลบ|เพิ่ม|push|commit|merge|\b(run|build|test|create|make|generate|git|clean|debug|fix|exec|bash|rerank|verify)\b)/i
-  const proseRegex = /^(อธิบาย|แปล|คืออะไร|ทำไม|ช่วยเล่า|เขียนกลอน|how\s+does|explain|what\s+is|tell\s+me|why\s+is|define)\b/i
+  const proseRegex = /(อธิบาย|แปล|คืออะไร|ทำไม|ช่วยเล่า|เขียนกลอน|\b(how\s+does|explain|what\s+is|tell\s+me|why\s+is|define)\b)/i
 
+  const hasNegative = negativeRegex.test(lower)
+  const hasExplanation = explanationRegex.test(lower)
   const hasAction = actionRegex.test(lower)
   const hasProse = proseRegex.test(lower)
 
   let actionScore = 0.20
   let proseSuffices = 0.80
 
-  if (hasAction && !hasProse) {
+  if (hasNegative) {
+    // Explicit negative intent against execution: "อย่ารัน", "don't run", "สร้างแผน ไม่ต้อง execute"
+    actionScore = 0.05
+    proseSuffices = 0.95
+  } else if (hasExplanation) {
+    // Inquiry or explanation request: "อธิบายวิธีรัน test", "how to run test"
+    actionScore = 0.15
+    proseSuffices = 0.85
+  } else if (hasAction && !hasProse) {
     actionScore = 0.88
     proseSuffices = 0.12
   } else if (hasAction && hasProse) {
-    actionScore = 0.50
-    proseSuffices = 0.50
+    actionScore = 0.35
+    proseSuffices = 0.65
   } else if (hasProse) {
     actionScore = 0.10
     proseSuffices = 0.90
@@ -140,41 +152,122 @@ export async function evaluateRequestGate({ engine, request }) {
  * @returns {{
  *   action: string | null,
  *   confidence: number,
+ *   signalType: 'heuristic_operational',
  *   parameters: Record<string, unknown>,
- *   dispatchable: boolean
+ *   dispatchable: boolean,
+ *   refusalReason?: string,
+ *   matchedActions?: string[]
  * }}
  */
 export function resolveClosedSetAction(request) {
-  const lower = (request || '').toLowerCase().trim()
+  const trimmed = (request || '').trim()
+  const lower = trimmed.toLowerCase()
 
+  if (!lower) {
+    return {
+      action: null,
+      confidence: 0.0,
+      signalType: 'heuristic_operational',
+      parameters: {},
+      dispatchable: false,
+      refusalReason: 'empty_request',
+    }
+  }
+
+  // 1. Negative Intent Barrier: never dispatch if user asked NOT to execute
+  const negativeRegex = /(อย่า|ห้าม|ไม่ต้อง|ไม่ให้|ระวังอย่า|\b(don'?t|do not|never|stop|skip|without\s+(executing|running)|no\s+(exec|execution))\b)/i
+  if (negativeRegex.test(lower)) {
+    return {
+      action: null,
+      confidence: 0.0,
+      signalType: 'heuristic_operational',
+      parameters: {},
+      dispatchable: false,
+      refusalReason: 'negative_intent',
+    }
+  }
+
+  // 2. Speculative & Uncertainty Barrier: never dispatch on hesitant, speculative, or uncertain phrasing
+  const speculativeRegex = /(อาจจะ|น่าจะ|ลองคิดดู|หรือไม่อาจ|ไม่แน่ใจ|\b(maybe|perhaps|unclear|undecided|might|could\s+be)\b)/i
+  if (speculativeRegex.test(lower)) {
+    return {
+      action: null,
+      confidence: 0.0,
+      signalType: 'heuristic_operational',
+      parameters: {},
+      dispatchable: false,
+      refusalReason: 'speculative_or_uncertain',
+    }
+  }
+
+  // 3. Explanation / Inquiry Barrier: never dispatch if user asked for an explanation/guide
+  const explanationRegex = /(วิธี|อธิบาย|สอน|แนวทาง|คำสั่ง.*คืออะไร|\b(how\s+to|how\s+do|how\s+can|explain|show\s+me\s+how|what\s+is\s+the\s+command|tell\s+me\s+how|tutorial|guide)\b)/i
+  if (explanationRegex.test(lower)) {
+    return {
+      action: null,
+      confidence: 0.0,
+      signalType: 'heuristic_operational',
+      parameters: {},
+      dispatchable: false,
+      refusalReason: 'explanation_request',
+    }
+  }
+
+  // 3. Scan for matching closed-set actions
+  const matchedActions = []
   for (const [actionName, def] of Object.entries(CLOSED_SET_ACTIONS)) {
     const matched = def.keywords.some(kw => lower.includes(kw.toLowerCase()))
     if (matched) {
-      const params = {}
-      if (actionName === 'run_tests') {
-        if (lower.includes('unit')) params.target = 'unit'
-        else if (lower.includes('jev')) params.target = 'jev'
-        else if (lower.includes('imagine')) params.target = 'imagine'
-        else params.target = 'all'
-      } else if (actionName === 'imagine_image' || actionName === 'imagine_video') {
-        // Extract prompt
-        params.prompt = request.replace(/(สร้างรูป|วาดรูป|เจนภาพ|สร้างวิดีโอ|ทำคลิป|generate image|create video|imagine video)\s*/i, '').trim() || request
-      }
+      matchedActions.push(actionName)
+    }
+  }
 
-      return {
-        action: actionName,
-        confidence: 0.92,
-        parameters: params,
-        dispatchable: true,
-      }
+  // 4. Ambiguity / Multiple Actions Barrier:
+  // If multiple distinct actions matched (e.g. "เช็ค git status แล้วก็รัน test ด้วย"),
+  // a single closed-set dispatch is ambiguous and unsafe.
+  if (matchedActions.length > 1) {
+    return {
+      action: null,
+      confidence: 0.0,
+      signalType: 'heuristic_operational',
+      parameters: {},
+      dispatchable: false,
+      refusalReason: 'ambiguous_multiple_actions',
+      matchedActions,
+    }
+  }
+
+  if (matchedActions.length === 1) {
+    const actionName = matchedActions[0]
+    const params = {}
+    if (actionName === 'run_tests') {
+      if (lower.includes('unit')) params.target = 'unit'
+      else if (lower.includes('jev')) params.target = 'jev'
+      else if (lower.includes('imagine')) params.target = 'imagine'
+      else params.target = 'all'
+    } else if (actionName === 'imagine_image' || actionName === 'imagine_video') {
+      // Extract prompt safely
+      const cleaned = request.replace(/(สร้างรูป|วาดรูป|เจนภาพ|สร้างวิดีโอ|ทำคลิป|generate image|create video|imagine video)\s*/i, '').trim()
+      params.prompt = cleaned || request
+    }
+
+    return {
+      action: actionName,
+      // Operational signal: note that this is an operational heuristic threshold, NOT a calibrated Bayesian probability
+      confidence: 0.92,
+      signalType: 'heuristic_operational',
+      parameters: params,
+      dispatchable: true,
     }
   }
 
   return {
     action: null,
     confidence: 0.0,
+    signalType: 'heuristic_operational',
     parameters: {},
     dispatchable: false,
+    refusalReason: 'no_matching_action',
   }
 }
 
@@ -203,8 +296,8 @@ export async function handleProviderFailure({ request, providerError, engine }) 
 
   const errMessage = providerError instanceof Error ? providerError.message : String(providerError || 'Unknown provider failure')
 
-  // Case 1: The request is a closed-set actionable task (e.g. run tests, build, check safety)
-  if (dispatch.dispatchable && dispatch.action) {
+  // Case 1: The request is a validated closed-set actionable task AND the gate confirmed execution is required
+  if (dispatch.dispatchable && dispatch.action && gate.requiresExecution) {
     return {
       mode: 'action_dispatched',
       title: '⚡ Jev System 1 Direct Dispatch',
@@ -215,21 +308,23 @@ export async function handleProviderFailure({ request, providerError, engine }) 
         action: dispatch.action,
         parameters: dispatch.parameters,
         confidence: dispatch.confidence,
+        signalType: dispatch.signalType,
         gate,
       },
     }
   }
 
-  // Case 2: The request strictly requires generative prose (e.g. explain, write poetry, summarize dialogue)
-  if (gate.proseSuffices >= 0.60) {
+  // Case 2: The request strictly requires generative prose, explanation, or negative constraint
+  if (gate.proseSuffices >= 0.60 || !gate.requiresExecution) {
     return {
       mode: 'prose_unavailable',
       title: '⚠️ Generative Reasoning LLM Required',
-      summary: `Primary LLM provider is unavailable (${errMessage}). This query requires generative prose or creative writing (prose_suffices: ${gate.proseSuffices}), which exceeds System 1 decision boundaries.`,
+      summary: `Primary LLM provider is unavailable (${errMessage}). This query requires generative prose, explanation, or planning (prose_suffices: ${gate.proseSuffices}), which exceeds System 1 decision boundaries.`,
       suggestedAction: 'Switch to secondary LLM provider or verify upstream API credentials.',
       requiresLLM: true,
       system1Details: {
         gate,
+        dispatchRefusal: dispatch.refusalReason,
         explanation: 'TypeSafe Jev is a System 1 Decision Model (Choices, Nouls, Scores) and deliberately does not synthesize long prose.',
       },
     }

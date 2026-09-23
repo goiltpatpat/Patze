@@ -194,24 +194,25 @@ export async function routeTools({
   agentId = 'agent',
   bypassCache = false,
 }) {
-  if (!Array.isArray(tools) || tools.length === 0) {
+  const validTools = tools.filter(t => t && typeof t.name === 'string')
+  if (validTools.length === 0) {
     return []
   }
 
-  // 1. Turn-held caching: if already computed for this turn, return cached toolset directly.
-  // This preserves prefix prompt cache hits across steps 1, 2, 3... of the same turn.
-  const cacheKey = `${agentId}:${turn}`
+  // 1. Turn-held caching: if already computed for this turn and catalog composition,
+  // return cached toolset directly. This preserves prefix prompt cache hits across
+  // steps 1, 2, 3... of the same turn while safely adapting if the catalog is modified.
+  const catalogFingerprint = validTools.map(t => t.name).sort().join(',')
+  const cacheKey = `${agentId}:${turn}:${catalogFingerprint}`
   if (!bypassCache && turnCache.has(cacheKey)) {
     return turnCache.get(cacheKey)
   }
 
   try {
-    const availableNames = tools.map(t => (t && typeof t.name === 'string' ? t.name : ''))
+    const availableNames = validTools.map(t => t.name)
     const nameMap = new Map()
-    for (const tool of tools) {
-      if (tool && typeof tool.name === 'string') {
-        nameMap.set(tool.name, tool)
-      }
+    for (const tool of validTools) {
+      nameMap.set(tool.name, tool)
     }
 
     const intent = classifyTurnIntent(userText)
@@ -308,10 +309,10 @@ export async function routeTools({
     applyCoreFloor(keptNames, availableNames)
 
     // 6. Filter tool list
-    const filteredTools = tools.filter(t => t && t.name && keptNames.has(t.name))
+    const filteredTools = validTools.filter(t => keptNames.has(t.name))
 
     // 7. Fail-open: never return empty toolset
-    const finalTools = filteredTools.length > 0 ? filteredTools : tools
+    const finalTools = filteredTools.length > 0 ? filteredTools : validTools
 
     // Cache the turn's decision
     if (!bypassCache) {

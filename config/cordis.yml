@@ -9,6 +9,9 @@
     customSkillDirs:
       - ../.agents/skills
 
+- id: ui-sidebar-browser
+  disabled: false
+
 - insert:
     - id: patze-core
       name: ../src/index.js

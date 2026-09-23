@@ -78,3 +78,12 @@ export interface JevConfig {
   timeoutMs?: number
 }
 
+export interface ClosedSetActionDispatch {
+  action: string | null
+  confidence: number
+  signalType: 'heuristic_operational'
+  parameters: Record<string, unknown>
+  dispatchable: boolean
+  refusalReason?: string
+  matchedActions?: string[]
+}
