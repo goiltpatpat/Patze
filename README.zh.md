@@ -89,7 +89,7 @@ Patze/
 │       └── xai-imagine.test.js # 单元测试套件（11/11 测试全数通过）
 ├── .agents/skills/           # 22 项活跃 Patpat 工程技能 + typesafe-ai
 ├── plugins/patpat/           # 上游 Patpat 子模块
-├── engine/deepseek-harness/  # DeepSeek Harness 子模块 (v0.1.6-alpha.2)
+├── engine/deepseek-harness/  # DeepSeek Harness 子模块 (v0.1.7-rc.1)
 └── artifacts/                # 本地生成媒体产物（图片/视频，已 gitignore）
 ```
 
