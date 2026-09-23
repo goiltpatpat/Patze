@@ -49,6 +49,9 @@ jobs:
       - name: Build pinned engine
         run: pnpm build
 
+      - name: Verify opt-in model profile
+        run: python3 scripts/verify_curated_models.py
+
       - name: Check Patze profile overlay
         env:
           DSH_HOME: ${{ runner.temp }}/patze-dsh-home
@@ -61,3 +64,6 @@ jobs:
 
       - name: Smoke Patze Web runtime
         run: python3 scripts/verify_engine_smoke.py
+
+      - name: Smoke curated Web runtime
+        run: python3 scripts/verify_engine_smoke.py --curated

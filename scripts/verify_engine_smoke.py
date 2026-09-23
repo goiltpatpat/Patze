@@ -4,6 +4,7 @@
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -25,7 +26,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def smoke():
+def smoke(profile="web"):
     if (ENGINE / ".env").exists():
         raise RuntimeError("Engine .env must be absent for the isolated smoke test")
     with tempfile.TemporaryDirectory(prefix="patze-engine-smoke-") as temp:
@@ -39,9 +40,11 @@ def smoke():
             "DSH_TELEMETRY_DISABLED": "1",
             "NO_COLOR": "1",
         }
+        if profile == "patze-curated":
+            subprocess.run(("node", "scripts/init_curated_models.mjs"), cwd=ROOT, env=env, check=True)
         command = (
             "node", "--import", "tsx/esm", "apps/cli/src/bin.ts",
-            "--profile", "web", "--patch", str(ROOT / "config/cordis.yml"),
+            "--profile", profile, "--patch", str(ROOT / "config/cordis.yml"),
             "--host", "127.0.0.1", "--port", "0", "--no-open",
         )
         with log_path.open("w") as log:
@@ -89,4 +92,6 @@ def smoke():
 
 
 if __name__ == "__main__":
-    smoke()
+    if sys.argv[1:] not in ([], ["--curated"]):
+        raise SystemExit("Usage: verify_engine_smoke.py [--curated]")
+    smoke("patze-curated" if sys.argv[1:] else "web")
