@@ -6,20 +6,27 @@
   "type": "module",
   "packageManager": "pnpm@11.7.0",
   "bin": {
-    "patze": "./bin/patze.js"
+    "patze": "./bin/patze.js",
+    "patze-agent": "./bin/patze-agent.js"
   },
   "scripts": {
-    "setup": "git submodule update --init --recursive && pnpm --dir engine/deepseek-harness install --frozen-lockfile && pnpm build",
-    "postinstall": "git submodule update --init --recursive",
+    "setup": "git submodule update --init --recursive && node scripts/apply_dsh_compatibility_patch.mjs && node scripts/install_dsh_dependencies.mjs && pnpm build",
+    "postinstall": "git submodule update --init --recursive && node scripts/apply_dsh_compatibility_patch.mjs",
+    "local": "node ./bin/patze.js local",
     "web": "./bin/patze.js web",
     "headless": "./bin/patze.js headless",
     "dsh": "./bin/patze.js",
+    "desktop:preview": "./bin/patze.js desktop-preview",
     "models:init": "node scripts/init_curated_models.mjs",
     "build": "pnpm --dir engine/deepseek-harness run build",
     "test": "pnpm --dir engine/deepseek-harness run test",
+    "patze:online": "./bin/patze.js online",
+    "patze:host": "./bin/patze.js host",
+    "test:alpha": "node --test tests/alpha-pairing.test.js",
+    "test:desktop-preview": "node --test apps/desktop-preview/launcher.test.js",
     "test:imagine": "node --test src/tools/xai-imagine.test.js",
     "test:jev": "node --test src/jev/router.test.js src/jev/steer.test.js src/jev/rerank.test.js src/jev/cascade.test.js src/jev/adversarial.test.js",
-    "test:unit": "node --test src/jev/router.test.js src/jev/steer.test.js src/tools/xai-imagine.test.js src/jev/rerank.test.js src/jev/cascade.test.js src/jev/adversarial.test.js",
+    "test:unit": "node --test src/jev/router.test.js src/jev/steer.test.js src/tools/xai-imagine.test.js src/jev/rerank.test.js src/jev/cascade.test.js src/jev/adversarial.test.js src/web/search.test.js src/online/monitor.test.js tests/alpha-pairing.test.js apps/desktop-preview/launcher.test.js",
     "update-skills": "./bin/patze.js update-skills",
     "sync-skills": "./bin/patze.js update-skills"
   },

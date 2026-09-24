@@ -1,6 +1,6 @@
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { after, test } from 'node:test'
 import assert from 'node:assert/strict'
 
@@ -8,6 +8,7 @@ import { JevEngine } from '../jev/engine.js'
 import {
   VIDEO_MODEL,
   VIDEO_GENERATIONS_URL,
+  artifactsDir,
   generateImagineVideo,
   registerImagineTools,
   safeFilename,
@@ -153,6 +154,19 @@ test('safeFilename strips path traversal', () => {
   assert.equal(safeFilename('../etc/passwd', 'x.mp4'), 'passwd')
 })
 
+test('artifactsDir uses the configured user data directory when available', () => {
+  const previous = process.env.PATZE_ARTIFACTS_DIR
+  const directory = mkdtempSync(join(tmpdir(), 'patze-artifacts-'))
+  process.env.PATZE_ARTIFACTS_DIR = directory
+  try {
+    assert.equal(artifactsDir('images'), resolve(directory, 'images'))
+  } finally {
+    if (previous === undefined) delete process.env.PATZE_ARTIFACTS_DIR
+    else process.env.PATZE_ARTIFACTS_DIR = previous
+    rmSync(directory, { recursive: true, force: true })
+  }
+})
+
 test('cwd isolation: output path does not follow process.cwd()', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'patze-cwd-'))
   const prev = process.cwd()
@@ -189,4 +203,3 @@ test('cwd isolation: output path does not follow process.cwd()', async () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
-

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { spawn, execFileSync, execSync, spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(__dirname, '..')
@@ -84,6 +85,175 @@ if (existsSync(rootEnv)) {
 process.env.DSH_AGENTS_HOME ??= resolve(rootDir, '.agents')
 
 const args = process.argv.slice(2)
+
+// Native macOS Desktop preview using DSH's Electron shell and Patze's local profile overlay.
+if (args[0] === 'desktop-preview') {
+  const { launchDesktopPreview } = await import('../apps/desktop-preview/launcher.js')
+  const exitCode = await launchDesktopPreview({ repositoryRoot: rootDir, engineDirectory: engineDir })
+  process.exit(exitCode)
+}
+
+// Local and agent are explicit aliases for the full DeepSeek Harness Web Host.
+// The web profile owns its settings and agent runtime on this machine.
+const localAgentMode = args[0] === 'local' || args[0] === 'agent'
+if (localAgentMode) args.shift()
+
+// Fast-path: Patze Online Control Plane Server
+if (args[0] === 'online') {
+  let port = 4000
+  const portIdx = args.indexOf('--port')
+  if (portIdx !== -1 && args[portIdx + 1]) {
+    port = parseInt(args[portIdx + 1], 10)
+  }
+  const { PatzeOnlineServer } = await import('../src/online/server.js')
+  const server = new PatzeOnlineServer({ port })
+  const info = await server.listen()
+  console.log('\x1b[36m%s\x1b[0m', '⚡ [Patze Online] Control plane & device gateway online')
+  console.log(`🌐 Web UI Login: ${info.url}/login`)
+  console.log(`📡 Reverse Tunnel: ${info.url}/tunnel/connect`)
+  console.log(`🔒 Alpha Accounts: pat / brother (zero permanent tokens in URLs)`)
+
+  // Forward process termination
+  const cleanup = async () => {
+    await server.close()
+    process.exit(0)
+  }
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
+
+  // Keep process alive
+  await new Promise(() => {})
+}
+
+// Fast-path: Patze Local Host Pairing Command
+if (args[0] === 'host' && args[1] === 'pair') {
+  const { getDefaultConfigPath, pairLocalHost } = await import('../src/host/pairing.js')
+  let onlineUrl = 'http://127.0.0.1:4000'
+  let userId = 'pat'
+  let deviceName = ''
+  let deviceId = ''
+  let workspaces = [process.cwd()]
+
+  for (let i = 2; i < args.length; i++) {
+    if (args[i] === '--online' && args[i + 1]) onlineUrl = args[++i]
+    else if (args[i] === '--user' && args[i + 1]) userId = args[++i]
+    else if (args[i] === '--device' && args[i + 1]) deviceId = args[++i]
+    else if (args[i] === '--name' && args[i + 1]) deviceName = args[++i]
+    else if (args[i] === '--workspace' && args[i + 1]) workspaces = [args[++i]]
+  }
+
+  const secret = process.env[`PATZE_${userId.toUpperCase()}_PAIRING_SECRET`]
+  if (!secret) {
+    console.error(`Set PATZE_${userId.toUpperCase()}_PAIRING_SECRET before pairing this device.`)
+    process.exit(1)
+  }
+
+  try {
+    const config = await pairLocalHost({
+      onlineUrl,
+      userId,
+      secret,
+      deviceId,
+      deviceName,
+      allowedWorkspaces: workspaces,
+    })
+    console.log('\x1b[32m%s\x1b[0m', '✅ [Patze Host] Device paired and saved successfully.')
+    console.log(`Device ID: ${config.deviceId}`)
+    console.log(`Device config: ${getDefaultConfigPath()}`)
+    process.exit(0)
+  } catch (err) {
+    console.error('\x1b[31m%s\x1b[0m', `❌ [Patze Host] Pairing failed: ${err.message}`)
+    process.exit(1)
+  }
+}
+
+// Fast-path: Patze Local Host Daemon
+if (args[0] === 'host') {
+  const { assertSecureOnlineUrl, loadDeviceConfig } = await import('../src/host/pairing.js')
+  const { PatzeHostRunner } = await import('../src/host/runner.js')
+
+  const config = loadDeviceConfig()
+  let onlineUrl = config?.onlineUrl || 'http://127.0.0.1:4000'
+  let userId = config?.userId || 'pat'
+  let secret = ''
+  let deviceId = config?.deviceId || ''
+  let deviceName = config?.deviceName || ''
+  let workspaces = config?.allowedWorkspaces || [process.cwd()]
+
+  for (let i = 1; i < args.length; i++) {
+    if (args[i] === '--online' && args[i + 1]) onlineUrl = args[++i]
+    else if (args[i] === '--user' && args[i + 1]) userId = args[++i]
+    else if (args[i] === '--device' && args[i + 1]) deviceId = args[++i]
+    else if (args[i] === '--name' && args[i + 1]) deviceName = args[++i]
+    else if (args[i] === '--workspace' && args[i + 1]) workspaces = [args[++i]]
+  }
+
+  secret = (config?.userId === userId ? config?.secret : '')
+    || process.env[`PATZE_${userId.toUpperCase()}_PAIRING_SECRET`]
+
+  if (!secret) {
+    console.error(`No host secret configured. Pair first or set PATZE_${userId.toUpperCase()}_PAIRING_SECRET.`)
+    process.exit(1)
+  }
+  if (!deviceId) {
+    deviceId = `dev_${userId}_local`
+  }
+  if (!deviceName) {
+    deviceName = `${userId.toUpperCase()} PC`
+  }
+
+  assertSecureOnlineUrl(onlineUrl)
+
+  // Ensure device is registered on online server
+  try {
+    const pairEndpoint = new URL('/api/devices/pair', onlineUrl).toString()
+    await fetch(pairEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        deviceId,
+        deviceName,
+        secret,
+        allowedWorkspaces: workspaces,
+      }),
+    })
+  } catch {}
+
+  const runner = new PatzeHostRunner({
+    onlineUrl,
+    deviceId,
+    userId,
+    secret,
+    deviceName,
+    allowedWorkspaces: workspaces,
+    allowRemoteTerminal: process.env.PATZE_ALLOW_REMOTE_TERMINAL === 'true',
+  })
+
+  runner.on('connected', (info) => {
+    console.log('\x1b[32m%s\x1b[0m', `⚡ [Patze Local Host] Connected to Patze Online at ${info.onlineUrl}`)
+    console.log(`💻 Device ID: ${info.deviceId} (${deviceName})`)
+    console.log(`👤 Owner Account: ${userId}`)
+    console.log(`📁 Allowed Workspace: ${workspaces.join(', ')}`)
+    console.log('🔒 Agent runtime executing locally on this physical machine.')
+  })
+
+  runner.on('connection_lost', (err) => {
+    console.warn('\x1b[33m%s\x1b[0m', `⚠️ [Patze Local Host] Connection lost: ${err.message}. Retrying...`)
+  })
+
+  await runner.start()
+
+  const cleanup = () => {
+    runner.stop()
+    process.exit(0)
+  }
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
+
+  // Keep process alive
+  await new Promise(() => {})
+}
 
 // Fast-path: Jev System 1 Decision CLI Commands
 if (args[0] === 'route' && args[1]) {
@@ -274,6 +444,7 @@ if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
 // Assemble DSH command line with automatic Cordis patch overlay
 // Assemble DSH command line: launcher options (--profile, --patch) must precede app arguments
 let profile = 'web'
+let workspace = process.env.PATZE_WORKSPACE || process.cwd()
 const remainingArgs = []
 
 for (let i = 0; i < args.length; i++) {
@@ -282,9 +453,21 @@ for (let i = 0; i < args.length; i++) {
     profile = arg
   } else if (arg === '--profile' && args[i + 1]) {
     profile = args[++i]
+  } else if (localAgentMode && arg === '--workspace') {
+    if (!args[i + 1]) {
+      console.error('Usage: pnpm local [--workspace <existing-directory>] [DSH options]')
+      process.exit(1)
+    }
+    workspace = args[++i]
   } else {
     remainingArgs.push(arg)
   }
+}
+
+const localWorkspace = resolve(workspace)
+if (localAgentMode && (!existsSync(localWorkspace) || !statSync(localWorkspace).isDirectory())) {
+  console.error(`Patze workspace must be an existing directory: ${localWorkspace}`)
+  process.exit(1)
 }
 
 // Token Economy & Profile Hygiene: ensure clean web bundle profile unless --team is explicitly requested
@@ -312,8 +495,10 @@ if (!remainingArgs.includes('--patch') && existsSync(cordisPatch)) {
 }
 dshArgs.push(...remainingArgs)
 
-const proc = spawn('pnpm', ['dsh', ...dshArgs], {
-  cwd: engineDir,
+const engineRequire = createRequire(enginePkg)
+const tsxLoader = engineRequire.resolve('tsx/esm')
+const proc = spawn(process.execPath, ['--import', tsxLoader, resolve(engineDir, 'apps/cli/src/bin.ts'), ...dshArgs], {
+  cwd: localAgentMode ? localWorkspace : engineDir,
   stdio: 'inherit',
   env: process.env,
 })

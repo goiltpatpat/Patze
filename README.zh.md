@@ -147,9 +147,9 @@ pnpm web
 # 或: ./bin/patze.js web --no-open
 ```
 
-启动完成后，控制台将输出带认证令牌的访问地址：
+启动完成后，控制台会输出当前进程的一次性访问地址；请勿将实际地址复制到文档或提交中：
 ```text
-dsh web: http://127.0.0.1:3080/?token=Mx3lLUFF0ty3zw9d4mIBnhBIBL_vZCKoyinpRuCFG5g
+dsh web: http://127.0.0.1:3080/?token=<one-time-token>
 ```
 在浏览器中打开该 URL。直接访问裸地址 `http://127.0.0.1:3080` 将被安全拦截并返回 401。
 

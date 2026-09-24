@@ -75,6 +75,8 @@ The platform separates fast deterministic routing and safety from heavy reasonin
 ```text
 Patze/
 ├── bin/patze.js              # Platform CLI launcher (submodule bootstrap, .env, Cordis patch)
+├── apps/desktop-preview/     # macOS preview launcher and isolated DSH profile integration
+├── patches/                  # Compatibility patch for the pinned DSH release
 ├── config/cordis.yml         # Cordis configuration patch (injects patze-core and skill path)
 ├── src/
 │   ├── index.js              # Core platform entry: mounts Jev, AgentShield, and Imagine tools
@@ -86,10 +88,10 @@ Patze/
 │   │   └── types.ts          # Structured decision contracts
 │   └── tools/
 │       ├── xai-imagine.js    # xAI Imagine Suite (Image 2.0 & asynchronous Video 1.5)
-│       └── xai-imagine.test.js # Unit test suite (11/11 passing tests)
+│       └── xai-imagine.test.js # xAI image and video tool tests
 ├── .agents/skills/           # 22 active Patpat engineering workflows + typesafe-ai
 ├── plugins/patpat/           # Upstream Patpat submodule
-├── engine/deepseek-harness/  # DeepSeek Harness submodule (v0.1.7-rc.1)
+├── engine/deepseek-harness/  # DSH engine with standalone CLI and Desktop apps (v0.1.7-rc.1)
 └── artifacts/                # Local generated media outputs (images/videos, gitignored)
 ```
 
@@ -147,17 +149,44 @@ To create a separate Web profile with Kimi 2.6 and newer and GPT-6 Astra, Sol, a
 ### Mode A: Interactive Web UI
 
 ```sh
+pnpm local
+# Or select the project folder the agent should open with:
+pnpm local --workspace "C:\Users\Brother\Documents\Project"
+# Windows launcher:
+start-brother-agent.bat --workspace "C:\Users\Brother\Documents\Project"
+# or
 pnpm web
 # or: ./bin/patze.js web --no-open
 ```
 
+`pnpm local` runs the full DeepSeek Harness Web Host on this machine, so the agent uses the logged-in OS account and the local profile for filesystem, terminal, model, and plugin settings. The authenticated Patze Online proxy is a separate control-plane surface; it does not own a paired device's DSH settings or provider directory.
+
+Patze Online's shared DSH proxy is admin-only. Other accounts use the device dashboard; each user's full DSH agent and settings run through `pnpm local` on that user's machine.
+
+To run Patze Online, configure at least one account's `PATZE_<USER>_PASSWORD` and `PATZE_<USER>_PAIRING_SECRET` values in `.env` first. The server binds to loopback only. For browser access over a network, put a TLS reverse proxy in front of `127.0.0.1`, set `PATZE_ONLINE_SECURE_COOKIES=true`, and enable login rate limiting at the proxy. The alpha server does not implement login throttling and is not intended for direct internet exposure.
+
+The legacy paired Host bridge caps requests at 1 MiB, terminal output at 512 KiB per stream, remote file reads and proxied DSH responses at 2 MiB, and directory listings at 1,000 entries. Use `pnpm local` on the user's machine for the full DeepSeek Harness agent and its local settings.
+
 At startup, Patze outputs an authenticated loopback address:
 ```text
-dsh web: http://127.0.0.1:3080/?token=Mx3lLUFF0ty3zw9d4mIBnhBIBL_vZCKoyinpRuCFG5g
+dsh web: http://127.0.0.1:3080/?token=<one-time-token>
 ```
-Open this URL in your browser. Raw unauthenticated requests to `http://127.0.0.1:3080` are rejected with HTTP 401 for security.
+Open the URL printed by this process in your browser. The one-time token changes with the process; do not copy a live URL into documentation. Raw unauthenticated requests to `http://127.0.0.1:3080` are rejected with HTTP 401 for security.
 
-### Mode B: Headless & CI/CD Pipeline
+### Mode B: macOS Desktop Preview
+
+For a native MacBook test, run the preview from the Patze checkout on that Mac:
+
+```sh
+pnpm setup
+pnpm desktop:preview
+```
+
+`pnpm setup` initializes the pinned DSH submodule, applies Patze's reviewed compatibility patch for that exact DSH revision, installs engine dependencies, and builds the engine. The DSH install runs in CI mode because its Git hook installer cannot safely migrate the Git metadata used by a submodule checkout; this skips DSH repository-only Git hooks, while Patze runtime permission checks remain active. The preview then launches DSH's Electron Desktop shell on the Mac, loads Patze's current `config/cordis.yml` and core, and runs its local agent with the signed-in macOS user's workspace permissions. Models, provider settings, plugins, terminal, and file access use a dedicated preview profile under `~/Library/Application Support/Patze Preview/dsh-home`; generated media uses the sibling `artifacts` folder. Provider keys can be entered in Desktop Settings or supplied through the checkout's `.env`.
+
+This is a source-based developer preview. It requires Node.js, pnpm, the repository checkout, and a successful native `pnpm setup` on the Mac. It does not produce a distributable `.dmg` or signed installer. Native Computer Use is not enabled in Patze's current profile. Set `PATZE_DESKTOP_PREVIEW_HOME` to select a different preview data directory; the launcher refuses to replace an existing unrelated Desktop profile patch.
+
+### Mode C: Headless & CI/CD Pipeline
 
 Run autonomous tasks directly from terminal or CI workflows:
 
@@ -166,7 +195,7 @@ pnpm headless -- "Audit workspace dependencies and report security findings"
 ./bin/patze.js --profile headless "Analyze repository architecture"
 ```
 
-### Mode C: High-Speed CLI Utilities
+### Mode D: High-Speed CLI Utilities
 
 Patze exposes deterministic CLI subcommands for rapid System 1 verification and media generation:
 
@@ -249,4 +278,3 @@ pnpm test
 ## License
 
 Released under the [MIT License](LICENSE).
-

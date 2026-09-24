@@ -4,8 +4,8 @@
  * Image: grok-imagine-image-2.0 via POST /v1/images/generations
  * Video: grok-imagine-video-1.5 via POST /v1/videos/generations then GET /v1/videos/{request_id}
  *
- * Artifacts are written under the Patze repo root. The engine process cwd is
- * engine/deepseek-harness, so process.cwd() is the wrong output root.
+ * Artifacts default to the Patze repo root. Packaged hosts can set
+ * PATZE_ARTIFACTS_DIR to a user-writable data directory.
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
@@ -35,7 +35,8 @@ export function safeFilename(name, fallback) {
  * @param {'images' | 'videos'} kind
  */
 export function artifactsDir(kind) {
-  return resolve(REPO_ROOT, 'artifacts', kind)
+  const artifactsRoot = process.env.PATZE_ARTIFACTS_DIR?.trim()
+  return resolve(artifactsRoot || resolve(REPO_ROOT, 'artifacts'), kind)
 }
 
 function sleep(ms, signal) {
