@@ -27,6 +27,11 @@ jobs:
           git -C engine/deepseek-harness fetch --tags --quiet origin
           git -C engine/deepseek-harness describe --exact-match --tags --match 'dsh-v*' HEAD
 
+      - name: Verify pinned Patpat skill copy
+        run: |
+          git submodule update --init plugins/patpat
+          python3 scripts/verify_patpat_skills.py
+
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0

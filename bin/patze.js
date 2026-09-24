@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { spawn, execSync } from 'node:child_process'
+import { spawn, execFileSync, execSync, spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(__dirname, '..')
@@ -242,17 +242,27 @@ if (args[0] === 'stats' || args[0] === 'economy') {
 
 // Fast-path: Update and synchronize Patpat skills from upstream repository
 if (args[0] === 'update-skills' || args[0] === 'sync-skills') {
-  console.log('\x1b[36m%s\x1b[0m', '🔄 [Patze] Updating Patpat submodule from upstream (main)...')
+  console.log('\x1b[36m%s\x1b[0m', '🔍 [Patze] Verifying the pinned Patpat skill copy...')
   try {
+    execFileSync('python3', ['scripts/verify_patpat_skills.py'], { cwd: rootDir, stdio: 'inherit' })
+    console.log('\x1b[36m%s\x1b[0m', '🔄 [Patze] Updating Patpat submodule from upstream (main)...')
     execSync('git submodule update --remote plugins/patpat', {
       cwd: rootDir,
       stdio: 'inherit',
     })
-    console.log('\x1b[36m%s\x1b[0m', '📦 [Patze] Synchronizing skills into .agents/skills...')
-    execSync('python3 -c "import shutil; from pathlib import Path; src=Path(\'plugins/patpat/skills\'); dst=Path(\'.agents/skills\'); [shutil.copytree(s, dst/s.name, dirs_exist_ok=True) for s in src.iterdir() if s.is_dir() and (s/\'SKILL.md\').is_file()]; print(\'✨ Successfully synchronized all Patpat skills.\')"', {
-      cwd: rootDir,
-      stdio: 'inherit',
-    })
+    const check = spawnSync('python3', ['scripts/verify_patpat_skills.py'], { cwd: rootDir, stdio: 'ignore' })
+    if (check.error) throw check.error
+    if (check.status !== 0) {
+      const backupRoot = resolve(rootDir, 'tmp')
+      mkdirSync(backupRoot, { recursive: true })
+      const backup = resolve(backupRoot, `patpat-skills-${Date.now()}-${process.pid}`)
+      console.log('\x1b[36m%s\x1b[0m', `📦 [Patze] Updating owned Patpat skills; backup: ${backup}`)
+      execFileSync('python3', [
+        'plugins/patpat/scripts/update_skills.py',
+        '--target', '.agents/skills', '--backup', backup,
+      ], { cwd: rootDir, stdio: 'inherit' })
+    }
+    execFileSync('python3', ['scripts/verify_patpat_skills.py'], { cwd: rootDir, stdio: 'inherit' })
     console.log('\x1b[32m%s\x1b[0m', '✅ [Patze] Patpat skills update completed successfully!')
     process.exit(0)
   } catch (err) {

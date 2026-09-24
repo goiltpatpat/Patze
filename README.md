@@ -224,7 +224,7 @@ FRAME ──► INSPECT ──► PROOF CONTRACT ──► ACT ──► VERIFY 
 # Run Patze native unit test suite (Jev Router, Steer Policy, Imagine Suite)
 pnpm run test:unit
 
-# Update and synchronize Patpat skills from upstream
+# Update the pinned Patpat submodule and its owned skill copy locally
 pnpm update-skills
 
 # Syntax validation across all core modules
@@ -234,7 +234,7 @@ node --check src/index.js && node --check src/jev/engine.js && node --check src/
 pnpm test
 ```
 
-Automated daily skill synchronization is maintained via [.github/workflows/sync-patpat.yml](.github/workflows/sync-patpat.yml).
+`.agents/skills` is a portable copy of the 22 skills in the pinned `plugins/patpat` submodule, plus Patze's own `typesafe-ai` skill. The updater checks ownership, preserves a rollback backup under ignored `tmp/`, and refuses changed owned files. The daily [Patpat check](.github/workflows/sync-patpat.yml) fails when upstream advances, prompting `pnpm update-skills` and a reviewed PR with CI before changes enter `main`.
 
 ---
 
