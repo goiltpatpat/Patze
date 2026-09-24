@@ -27,6 +27,9 @@ jobs:
           git -C engine/deepseek-harness fetch --tags --quiet origin
           git -C engine/deepseek-harness describe --exact-match --tags --match 'dsh-v*' HEAD
 
+      - name: Apply Patze DSH compatibility patch
+        run: node scripts/apply_dsh_compatibility_patch.mjs
+
       - name: Verify pinned Patpat skill copy
         run: |
           git submodule update --init plugins/patpat
@@ -47,6 +50,9 @@ jobs:
 
       - name: Test Patze
         run: pnpm test:unit
+
+      - name: Test DSH plugin metadata and profile resolution
+        run: pnpm --dir engine/deepseek-harness exec vitest run packages/boot/app-boot/tests/package-meta.spec.ts packages/boot/app-boot/tests/profile-resolution.spec.ts
 
       - name: Test Harness skill discovery
         run: pnpm --dir engine/deepseek-harness exec vitest run packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts

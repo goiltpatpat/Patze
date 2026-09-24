@@ -97,7 +97,7 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
                     type: 'text',
                     text: `[Patze Jev Diagnostic Gate] Warning: Tool execution produced diagnostics (${proof.failedAssertions.join('; ')}). Focus on resolving this failure before advancing.`,
                   }],
-                  source: { kind: 'plugin', plugin: 'patze-jev' },
+                  source: { kind: 'plugin:patze-jev' },
                 })
               }
             }
@@ -186,7 +186,7 @@ export function apply(ctx: CordisContext, config: JevConfig = {}) {
                 type: 'text',
                 text: `[Patze Jev]\n• Skill: ${route.skill}\n• Verify on the authoritative runtime surface before claiming completion.`,
               }],
-              source: { kind: 'plugin', plugin: 'patze-jev' },
+              source: { kind: 'plugin:patze-jev' },
             })
           }
         }

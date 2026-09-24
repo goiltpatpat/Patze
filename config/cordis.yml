@@ -10,6 +10,10 @@
 - id: ui-sidebar-browser
   disabled: false
 
+- id: web
+  config:
+    searchProvider: patze-search
+
 - insert:
     - id: patze-core
       name: ../src/index.js

@@ -22,6 +22,8 @@ tmp/
 .artifacts/
 artifacts/
 **/artifacts/
+scratch/
+.patze/
 
 # Sub-engines and build outputs
 engine/deepseek-harness/node_modules/

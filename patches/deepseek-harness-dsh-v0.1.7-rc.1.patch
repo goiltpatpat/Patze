@@ -1,0 +1,75 @@
+diff --git a/packages/boot/app-boot/src/package-meta.ts b/packages/boot/app-boot/src/package-meta.ts
+index 131082ce8a..9784860ec7 100644
+--- a/packages/boot/app-boot/src/package-meta.ts
++++ b/packages/boot/app-boot/src/package-meta.ts
+@@ -61,2 +61,10 @@ function missingResource(error: unknown): boolean {
+-  return code === 'ERR_PACKAGE_PATH_NOT_EXPORTED' || code === 'ERR_MODULE_NOT_FOUND'
+-    || code === 'MODULE_NOT_FOUND' || code === 'ENOENT' || code === 'ENOTDIR'
++  if (code === 'ERR_PACKAGE_PATH_NOT_EXPORTED' || code === 'ERR_MODULE_NOT_FOUND'
++    || code === 'MODULE_NOT_FOUND' || code === 'ENOENT' || code === 'ENOTDIR') {
++    return true
++  }
++  const msg = error instanceof Error ? error.message : String(error)
++  return msg.includes('ERR_PACKAGE_PATH_NOT_EXPORTED')
++    || msg.includes('ERR_MODULE_NOT_FOUND')
++    || msg.includes('Package subpath')
++    || msg.includes('Cannot find package')
++    || msg.includes('Cannot find module')
+diff --git a/packages/boot/app-boot/src/profile-resolution/resolver.ts b/packages/boot/app-boot/src/profile-resolution/resolver.ts
+index ea931a5087..de51e3e49d 100644
+--- a/packages/boot/app-boot/src/profile-resolution/resolver.ts
++++ b/packages/boot/app-boot/src/profile-resolution/resolver.ts
+@@ -655,2 +655,9 @@ function internalModules(): InternalModules {
+-function throwWithImporter(error: unknown, routedParent: string, parent: string): never {
+-  const code = (error as NodeJS.ErrnoException).code
++/**
++ * Rewrite an error's importer paths when the runtime permits mutation.
++ * @param error - native resolver failure.
++ * @param routedParent - temporary routed importer used during resolution.
++ * @param parent - original importer shown to the caller.
++ * @returns the same error; an immutable error remains unchanged.
++ */
++export function rewriteImporterError(error: unknown, routedParent: string, parent: string): unknown {
++  const code = (error as NodeJS.ErrnoException | null)?.code
+@@ -663 +670,5 @@ function throwWithImporter(error: unknown, routedParent: string, parent: string)
+-    error.message = message
++    try {
++      error.message = message
++    } catch {
++      // Preserve Node's resolver error when a runtime marks it immutable.
++    }
+@@ -665 +676,7 @@ function throwWithImporter(error: unknown, routedParent: string, parent: string)
+-    if (stack !== undefined) error.stack = stack.replace(originalMessage, message)
++    if (stack !== undefined) {
++      try {
++        error.stack = stack.replace(originalMessage, message)
++      } catch {
++        // A read-only stack must not replace the original package resolution error.
++      }
++    }
+@@ -667 +684,5 @@ function throwWithImporter(error: unknown, routedParent: string, parent: string)
+-  throw error
++  return error
++}
++
++function throwWithImporter(error: unknown, routedParent: string, parent: string): never {
++  throw rewriteImporterError(error, routedParent, parent)
+diff --git a/packages/boot/app-boot/tests/profile-resolution.spec.ts b/packages/boot/app-boot/tests/profile-resolution.spec.ts
+index 493202fd69..955dda7e14 100644
+--- a/packages/boot/app-boot/tests/profile-resolution.spec.ts
++++ b/packages/boot/app-boot/tests/profile-resolution.spec.ts
+@@ -21,0 +22 @@ import {
++  rewriteImporterError,
+@@ -653,0 +655,12 @@ describe('runtime resolution', { concurrent: false }, () => {
++  it('does not mask immutable native resolver errors while restoring the importer', () => {
++    const routedParent = pathToFileURL(join(tmpdir(), 'routed-importer.mjs')).href
++    const parent = pathToFileURL(join(tmpdir(), 'original-importer.mjs')).href
++    const originalError = new Error(`Package subpath was resolved from ${routedParent}`) as NodeJS.ErrnoException
++    originalError.code = 'ERR_PACKAGE_PATH_NOT_EXPORTED'
++    Object.freeze(originalError)
++
++    expect(() => rewriteImporterError(originalError, routedParent, parent)).not.toThrow()
++    expect(rewriteImporterError(originalError, routedParent, parent)).toBe(originalError)
++    expect(originalError.code).toBe('ERR_PACKAGE_PATH_NOT_EXPORTED')
++  })
++

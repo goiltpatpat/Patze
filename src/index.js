@@ -7,6 +7,7 @@
 import * as JevPlugin from './jev/plugin.js'
 import { JevEngine } from './jev/engine.js'
 import { IMAGINE_SYSTEM_PROMPT, registerImagineTools } from './tools/xai-imagine.js'
+import { PatzeSearchProvider, PATZE_SEARCH_PROVIDER_ID } from './web/search.js'
 
 export const name = 'patze-core'
 export const inject = ['tools']
@@ -46,12 +47,27 @@ export function apply(ctx) {
 
   if (typeof ctx.inject === 'function') {
     ctx.inject(['systemPrompt'], (inner) => mountImaginePrompt(inner))
+    ctx.inject(['web'], (webCtx) => {
+      try {
+        webCtx.web.registerSearchProvider(new PatzeSearchProvider())
+        console.log('\x1b[32m%s\x1b[0m', '🌐 [Patze] Registered Universal Web Search Provider (patze-search)')
+      } catch (err) {
+        // Silently skip if already registered or unavailable
+      }
+    })
   } else {
     mountImaginePrompt(ctx)
+    if (ctx.web && typeof ctx.web.registerSearchProvider === 'function') {
+      try {
+        ctx.web.registerSearchProvider(new PatzeSearchProvider())
+        console.log('\x1b[32m%s\x1b[0m', '🌐 [Patze] Registered Universal Web Search Provider (patze-search)')
+      } catch {}
+    }
   }
 }
 
 export { JevEngine, JevPlugin }
+export { PatzeSearchProvider, PATZE_SEARCH_PROVIDER_ID } from './web/search.js'
 export { routeTools, CORE_TOOLS, IMPLIES, PROB_KEEP } from './jev/router.js'
 export { rerankCandidates, verifyCitation, DEFAULT_POLICIES } from './jev/rerank.js'
 export { evaluateRequestGate, resolveClosedSetAction, handleProviderFailure, CLOSED_SET_ACTIONS } from './jev/cascade.js'
